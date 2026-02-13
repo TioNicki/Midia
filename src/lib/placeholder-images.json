@@ -1,3 +1,22 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "church-media",
+      "description": "Church media production background",
+      "imageUrl": "https://images.unsplash.com/photo-1612043071344-94c20c4c837e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjaHVyY2glMjBtZWRpYXxlbnwwfHx8fDE3NzA5OTM3NTl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "church media"
+    },
+    {
+      "id": "worship-service",
+      "description": "Worship service atmosphere",
+      "imageUrl": "https://images.unsplash.com/photo-1623080882579-050db1182f51?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHx3b3JzaGlwJTIwc2VydmljZXxlbnwwfHx8fDE3NzA5OTM3NTl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "worship service"
+    },
+    {
+      "id": "event-bg",
+      "description": "Church event background",
+      "imageUrl": "https://images.unsplash.com/photo-1565813086292-604790c8a97b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjaHVyY2glMjBldmVudHxlbnwwfHx8fDE3NzA5OTM3NTl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "church event"
+    }
+  ]
 }

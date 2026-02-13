@@ -2,15 +2,52 @@
 "use client"
 
 import { useState } from "react"
+import { useAuth } from "@/lib/auth-store"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import { MessageSquare, Send, Heart, Lightbulb, AlertTriangle } from "lucide-react"
+import { 
+  MessageSquare, 
+  Send, 
+  Heart, 
+  Lightbulb, 
+  AlertTriangle, 
+  User, 
+  Calendar,
+  CheckCircle2
+} from "lucide-react"
+
+const MOCK_FEEDBACKS = [
+  { 
+    id: 1, 
+    usuario: "Pedro Santos", 
+    tipo: "elogio", 
+    mensagem: "A equipe de projeção foi excelente no culto de ontem! Sincronia perfeita com o louvor.", 
+    data: "15/04/2024" 
+  },
+  { 
+    id: 2, 
+    usuario: "Ana Paula", 
+    tipo: "ideia", 
+    mensagem: "Poderíamos criar um guia rápido plastificado para quem fica no streaming, com os passos de emergência.", 
+    data: "16/04/2024" 
+  },
+  { 
+    id: 3, 
+    usuario: "Ricardo Lima", 
+    tipo: "reclamacao", 
+    mensagem: "O retorno de áudio do lado esquerdo está falhando intermitentemente. Precisamos revisar os cabos.", 
+    data: "17/04/2024" 
+  },
+]
 
 export default function FeedbackPage() {
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'admin'
   const [loading, setLoading] = useState(false)
   const [type, setType] = useState("elogio")
   const { toast } = useToast()
@@ -25,6 +62,68 @@ export default function FeedbackPage() {
         description: "Agradecemos sua contribuição para o crescimento do grupo.",
       })
     }, 1000)
+  }
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case "elogio": return <Heart className="h-4 w-4 text-red-500" />
+      case "ideia": return <Lightbulb className="h-4 w-4 text-amber-500" />
+      case "reclamacao": return <AlertTriangle className="h-4 w-4 text-destructive" />
+      default: return <MessageSquare className="h-4 w-4" />
+    }
+  }
+
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case "elogio": return "Elogio"
+      case "ideia": return "Ideia"
+      case "reclamacao": return "Reclamação"
+      default: return type
+    }
+  }
+
+  if (isAdmin) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-3xl font-headline font-bold text-primary">Gestão de Feedbacks</h2>
+          <p className="text-muted-foreground">Analise as sugestões e comentários enviados pela equipe de mídia.</p>
+        </div>
+
+        <div className="grid gap-4">
+          {MOCK_FEEDBACKS.map((fb) => (
+            <Card key={fb.id} className="hover:shadow-md transition-shadow">
+              <CardHeader className="flex flex-row items-start justify-between pb-2">
+                <div className="flex items-center gap-3">
+                  <div className="bg-primary/10 p-2 rounded-full">
+                    {getTypeIcon(fb.tipo)}
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      {getTypeLabel(fb.tipo)}
+                      <Badge variant="outline" className="font-normal">
+                        #{fb.id}
+                      </Badge>
+                    </CardTitle>
+                    <CardDescription className="flex items-center gap-2 mt-1">
+                      <User className="h-3 w-3" /> {fb.usuario} • <Calendar className="h-3 w-3" /> {fb.data}
+                    </CardDescription>
+                  </div>
+                </div>
+                <Button variant="ghost" size="sm" className="text-primary font-bold">
+                  <CheckCircle2 className="mr-2 h-4 w-4" /> Marcar como Lido
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm leading-relaxed text-foreground bg-muted/30 p-4 rounded-lg border italic">
+                  "{fb.mensagem}"
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -51,7 +150,7 @@ export default function FeedbackPage() {
                   <RadioGroupItem value="elogio" id="elogio" className="peer sr-only" />
                   <Label
                     htmlFor="elogio"
-                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
                   >
                     <Heart className="mb-2 h-6 w-6 text-red-500" />
                     Elogio
@@ -61,7 +160,7 @@ export default function FeedbackPage() {
                   <RadioGroupItem value="ideia" id="ideia" className="peer sr-only" />
                   <Label
                     htmlFor="ideia"
-                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
                   >
                     <Lightbulb className="mb-2 h-6 w-6 text-amber-500" />
                     Ideia
@@ -71,7 +170,7 @@ export default function FeedbackPage() {
                   <RadioGroupItem value="reclamacao" id="reclamacao" className="peer sr-only" />
                   <Label
                     htmlFor="reclamacao"
-                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
                   >
                     <AlertTriangle className="mb-2 h-6 w-6 text-destructive" />
                     Reclamação

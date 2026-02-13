@@ -1,0 +1,412 @@
+{
+  "entities": {
+    "AppUser": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AppUser",
+      "type": "object",
+      "description": "Represents a user within the FaithFlow application, linked to an external authentication system. Stores application-specific user data and roles for access control.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the AppUser entity."
+        },
+        "externalAuthId": {
+          "type": "string",
+          "description": "The unique identifier for the user from the external authentication system. (Relationship: ExternalAuthSystem 1:1 AppUser)"
+        },
+        "name": {
+          "type": "string",
+          "description": "The display name of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user.",
+          "format": "email"
+        },
+        "role": {
+          "type": "string",
+          "description": "The role of the user within the FaithFlow application, determining access permissions (e.g., 'admin', 'member')."
+        }
+      },
+      "required": [
+        "id",
+        "externalAuthId",
+        "name",
+        "email",
+        "role"
+      ]
+    },
+    "DutyRole": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DutyRole",
+      "type": "object",
+      "description": "Defines a specific role or function that a member can perform in a duty roster (e.g., 'Sound Tech', 'Lead Singer').",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the DutyRole entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the duty role (e.g., 'Líder de Louvor', 'Técnico de Som')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the responsibilities for this role."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description"
+      ]
+    },
+    "WorshipService": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "WorshipService",
+      "type": "object",
+      "description": "Represents a specific worship service or gathering, including its date, theme, and selected praise songs.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the WorshipService entity."
+        },
+        "date": {
+          "type": "string",
+          "description": "The date and time of the worship service.",
+          "format": "date-time"
+        },
+        "theme": {
+          "type": "string",
+          "description": "The main theme or message title for the worship service."
+        },
+        "praiseSongIds": {
+          "type": "array",
+          "description": "References to PraiseSongs selected for this worship service. (Relationship: WorshipService N:N PraiseSong)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "date",
+        "theme",
+        "praiseSongIds"
+      ]
+    },
+    "DutyRoster": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DutyRoster",
+      "type": "object",
+      "description": "Represents a schedule of duties for a specific date, often associated with a worship service.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the DutyRoster entity."
+        },
+        "worshipServiceId": {
+          "type": "string",
+          "description": "Reference to the WorshipService this roster is associated with. (Relationship: WorshipService 1:N DutyRoster)"
+        },
+        "date": {
+          "type": "string",
+          "description": "The date for which this duty roster applies.",
+          "format": "date"
+        },
+        "description": {
+          "type": "string",
+          "description": "A general description or title for the duty roster (e.g., 'Escala de Louvor Semanal')."
+        }
+      },
+      "required": [
+        "id",
+        "worshipServiceId",
+        "date",
+        "description"
+      ]
+    },
+    "DutyAssignment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DutyAssignment",
+      "type": "object",
+      "description": "Links a specific AppUser to a DutyRole within a particular DutyRoster, detailing who is assigned to what role for which schedule.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the DutyAssignment entity."
+        },
+        "dutyRosterId": {
+          "type": "string",
+          "description": "Reference to the DutyRoster this assignment belongs to. (Relationship: DutyRoster 1:N DutyAssignment)"
+        },
+        "appUserId": {
+          "type": "string",
+          "description": "Reference to the AppUser assigned to this duty. (Relationship: AppUser 1:N DutyAssignment)"
+        },
+        "dutyRoleId": {
+          "type": "string",
+          "description": "Reference to the DutyRole assigned to the user. (Relationship: DutyRole 1:N DutyAssignment)"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Any specific notes or instructions for this individual assignment."
+        }
+      },
+      "required": [
+        "id",
+        "dutyRosterId",
+        "appUserId",
+        "dutyRoleId"
+      ]
+    },
+    "PraiseSong": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PraiseSong",
+      "type": "object",
+      "description": "Stores details about a praise song available for worship services.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the PraiseSong entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the praise song."
+        },
+        "artist": {
+          "type": "string",
+          "description": "The original artist or composer of the song."
+        },
+        "lyrics": {
+          "type": "string",
+          "description": "The full lyrics of the song."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Internal notes about the song, such as key, tempo, or special arrangements."
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "artist",
+        "lyrics"
+      ]
+    },
+    "ImportantDate": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ImportantDate",
+      "type": "object",
+      "description": "Records important events or dates for the church community.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ImportantDate entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the important event or date."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the event or significance of the date."
+        },
+        "date": {
+          "type": "string",
+          "description": "The specific date and time of the event.",
+          "format": "date-time"
+        },
+        "location": {
+          "type": "string",
+          "description": "The physical location where the event will take place."
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "description",
+        "date"
+      ]
+    },
+    "Feedback": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Feedback",
+      "type": "object",
+      "description": "Stores feedback submitted by church members, which can be a complaint, idea, or compliment.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Feedback entity."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of feedback submitted (e.g., 'complaint', 'idea', 'compliment')."
+        },
+        "message": {
+          "type": "string",
+          "description": "The detailed message content of the feedback."
+        },
+        "submittedByUserId": {
+          "type": "string",
+          "description": "Reference to the AppUser who submitted the feedback. (Relationship: AppUser 1:N Feedback)"
+        },
+        "submissionDateTime": {
+          "type": "string",
+          "description": "The date and time when the feedback was submitted.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "message",
+        "submittedByUserId",
+        "submissionDateTime"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/app_users/{appUserId}",
+        "definition": {
+          "entityName": "AppUser",
+          "schema": {
+            "$ref": "#/backend/entities/AppUser"
+          },
+          "description": "Stores individual user profiles including their role for application access control. The `appUserId` must match `request.auth.uid`. Includes denormalized 'role' for authorization independence.",
+          "params": [
+            {
+              "name": "appUserId",
+              "description": "The unique identifier for the AppUser, matching Firebase Authentication UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/worship_services/{worshipServiceId}",
+        "definition": {
+          "entityName": "WorshipService",
+          "schema": {
+            "$ref": "#/backend/entities/WorshipService"
+          },
+          "description": "Contains details about individual worship services, including date, theme, and selected praise songs. Readable by all authenticated users, writable by 'admin' role.",
+          "params": [
+            {
+              "name": "worshipServiceId",
+              "description": "The unique identifier for the WorshipService."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/praise_songs/{praiseSongId}",
+        "definition": {
+          "entityName": "PraiseSong",
+          "schema": {
+            "$ref": "#/backend/entities/PraiseSong"
+          },
+          "description": "Stores the master list of praise songs available for selection in worship services. Readable by all authenticated users, writable by 'admin' role.",
+          "params": [
+            {
+              "name": "praiseSongId",
+              "description": "The unique identifier for the PraiseSong."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/duty_roles/{dutyRoleId}",
+        "definition": {
+          "entityName": "DutyRole",
+          "schema": {
+            "$ref": "#/backend/entities/DutyRole"
+          },
+          "description": "Defines various duty roles (e.g., 'Sound Tech', 'Lead Singer') that can be assigned. Readable by all authenticated users, writable by 'admin' role.",
+          "params": [
+            {
+              "name": "dutyRoleId",
+              "description": "The unique identifier for the DutyRole."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/duty_rosters/{dutyRosterId}",
+        "definition": {
+          "entityName": "DutyRoster",
+          "schema": {
+            "$ref": "#/backend/entities/DutyRoster"
+          },
+          "description": "Schedules of duties for specific dates, often linked to a worship service. Readable by all authenticated users, writable by 'admin' role.",
+          "params": [
+            {
+              "name": "dutyRosterId",
+              "description": "The unique identifier for the DutyRoster."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/duty_rosters/{dutyRosterId}/duty_assignments/{dutyAssignmentId}",
+        "definition": {
+          "entityName": "DutyAssignment",
+          "schema": {
+            "$ref": "#/backend/entities/DutyAssignment"
+          },
+          "description": "Individual assignments of AppUsers to DutyRoles within a specific DutyRoster. Readable by all authenticated users, writable by 'admin' role. Access is independent of parent document attributes.",
+          "params": [
+            {
+              "name": "dutyRosterId",
+              "description": "The unique identifier of the parent DutyRoster."
+            },
+            {
+              "name": "dutyAssignmentId",
+              "description": "The unique identifier for the DutyAssignment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/important_dates/{importantDateId}",
+        "definition": {
+          "entityName": "ImportantDate",
+          "schema": {
+            "$ref": "#/backend/entities/ImportantDate"
+          },
+          "description": "Records important events or dates for the church community. Readable by all authenticated users, writable by 'admin' role.",
+          "params": [
+            {
+              "name": "importantDateId",
+              "description": "The unique identifier for the ImportantDate."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/feedback/{feedbackId}",
+        "definition": {
+          "entityName": "Feedback",
+          "schema": {
+            "$ref": "#/backend/entities/Feedback"
+          },
+          "description": "Stores feedback submissions (complaints, ideas, compliments) from members. Members can create, but only 'admin' role users can read, list, update, or delete. Includes 'submittedByUserId' for ownership tracking.",
+          "params": [
+            {
+              "name": "feedbackId",
+              "description": "The unique identifier for the Feedback document."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The FaithFlow Firestore structure is designed for secure, scalable, and debuggable access control, prioritizing Authorization Independence and adherence to QAPs. \n\n**Authorization Independence:** The core authorization mechanism relies on a centralized `AppUser` collection at `/app_users/{appUserId}`. Each user's role ('admin' or 'member') is stored directly within their `AppUser` document. This eliminates the need for `get()` calls on parent documents for authorization. Instead, security rules will directly query the requesting user's own `AppUser` document to determine their role (e.g., `get(/app_users/$(request.auth.uid)).data.role == 'admin'`). This pattern ensures atomic operations are not broken and debugging is simplified, as all authorization logic points to a single, easily verifiable source for the user's permissions.\n\n**QAPs (Queries are not Filters):** This design enables efficient and secure `list` operations without requiring clients to filter results. \n*   For public-read/admin-write collections (e.g., `worship_services`, `praise_songs`, `duty_roles`, `duty_rosters`, `important_dates`, and `duty_assignments` within a roster), all authenticated users are explicitly granted `read` and `list` permissions. This means `list` queries will return all documents, as intended, and no filtering by security rules is necessary on the client side. \n*   For `feedback`, regular members can `create` documents, but `read` and `list` operations are strictly limited to 'admin' users. This segregation ensures that members can submit feedback, but only administrators can view the complete list, thus upholding QAPs by making authorization explicit rather than relying on query filters. \n*   For `app_users`, users can read their own profile, and admins can read/list all profiles, again adhering to QAPs by having clear permissions for `list` operations based on role.\n\n**Structural Segregation & Access Modeling:**\n*   Most core application data (`worship_services`, `praise_songs`, `duty_roles`, `duty_rosters`, `important_dates`) resides in top-level collections, signifying a homogeneous security posture: universally readable by authenticated users, but exclusively writable (create, update, delete) by 'admin' users.\n*   User-specific data such as `AppUser` profiles are stored in `/app_users/{appUserId}`, where `appUserId` matches `request.auth.uid`, ensuring path-based ownership for individual profiles.\n*   `DutyAssignment` is structured as a subcollection under `DutyRoster` (`/duty_rosters/{dutyRosterId}/duty_assignments/{dutyAssignmentId}`). Its authorization follows the parent's pattern (all authenticated can read, admins can write), removing the need for `get()` calls on the parent for subcollection access.\n*   `Feedback` is a separate top-level collection with a distinct security profile: members can submit (create), but only admins can view (read, list).\n\nThis structure, by adhering to the core design principles and mandates, provides a robust and easily auditable security model for FaithFlow."
+  }
+}

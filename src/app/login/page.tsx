@@ -96,13 +96,22 @@ export default function LoginPage() {
       
       router.push("/dashboard")
     } catch (error: any) {
-      console.error("Erro no cadastro:", error)
-      let message = "Ocorreu um erro inesperado."
+      let message = "Ocorreu um erro ao criar sua conta."
+      
       if (error.code === 'auth/email-already-in-use') {
-        message = "Este e-mail já está em uso."
+        message = "Este e-mail já está cadastrado no sistema."
+      } else if (error.code === 'auth/invalid-email') {
+        message = "O e-mail informado é inválido."
+      } else if (error.code === 'auth/weak-password') {
+        message = "A senha escolhida é muito fraca."
       }
 
-      toast({ variant: "destructive", title: "Erro ao criar conta", description: message })
+      toast({ 
+        variant: "destructive", 
+        title: "Não foi possível cadastrar", 
+        description: message 
+      })
+      
       setLoading(false)
     }
   }

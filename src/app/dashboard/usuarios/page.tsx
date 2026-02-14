@@ -1,6 +1,7 @@
 
 "use client"
 
+import { useState } from "react"
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
 import { collection, doc } from "firebase/firestore"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -10,11 +11,24 @@ import { Badge } from "@/components/ui/badge"
 import { UserCheck, Shield, ShieldAlert, Loader2, Trash2, Mail, Crown, AlertCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export default function UsuariosPage() {
   const firestore = useFirestore()
   const { user: currentUser } = useUser()
   const { toast } = useToast()
+
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [idToDelete, setIdToDelete] = useState<string | null>(null)
 
   const userProfileRef = useMemoFirebase(() => 
     currentUser ? doc(firestore, 'app_users', currentUser.uid) : null, 
@@ -57,21 +71,15 @@ export default function UsuariosPage() {
     toast({ title: "Função alterada", description: `Usuário agora é ${newRole}.` })
   }
 
-  const handleDelete = (userId: string) => {
-    if (!isModerator) {
-      toast({ variant: "destructive", title: "Ação negada", description: "Apenas moderadores podem remover usuários." })
-      return
-    }
-    if (userId === currentUser?.uid) {
-      toast({ variant: "destructive", title: "Ação negada", description: "Você não pode remover a si mesmo." })
-      return
-    }
-    
-    if (window.confirm("Tem certeza que deseja remover este usuário permanentemente do sistema?")) {
-      const userRef = doc(firestore, 'app_users', userId)
-      deleteDocumentNonBlocking(userRef)
-      toast({ title: "Usuário removido", variant: "destructive" })
-    }
+  const confirmDelete = () => {
+    if (!idToDelete || !isModerator) return
+    if (idToDelete === currentUser?.uid) return
+
+    const userRef = doc(firestore, 'app_users', idToDelete)
+    deleteDocumentNonBlocking(userRef)
+    toast({ title: "Usuário removido", variant: "destructive" })
+    setIdToDelete(null)
+    setIsDeleteDialogOpen(false)
   }
 
   if (!isAdminOrHigher && profile) {
@@ -187,9 +195,9 @@ export default function UsuariosPage() {
                               variant="ghost" 
                               size="icon" 
                               className="text-destructive h-8 w-8 hover:bg-red-50" 
-                              onClick={(e) => {
-                                e.preventDefault()
-                                handleDelete(u.id)
+                              onClick={() => {
+                                setIdToDelete(u.id)
+                                setIsDeleteDialogOpen(true)
                               }}
                               title="Remover Usuário"
                             >
@@ -212,6 +220,23 @@ export default function UsuariosPage() {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Banir Usuário?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover este usuário permanentemente do sistema? Ele perderá todo o acesso às escalas e conteúdos internos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Confirmar Remoção
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

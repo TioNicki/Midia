@@ -19,6 +19,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -44,6 +54,8 @@ export default function EscalasPage() {
   const { toast } = useToast()
   
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [idToDelete, setIdToDelete] = useState<string | null>(null)
   const [newRoster, setNewRoster] = useState({ date: "", description: "" })
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [currentAssignment, setCurrentAssignment] = useState({ userId: "", roleId: "" })
@@ -58,7 +70,6 @@ export default function EscalasPage() {
   const rolesRef = useMemoFirebase(() => collection(firestore, 'duty_roles'), [firestore])
   const { data: roles } = useCollection(rolesRef)
 
-  // Consulta de usuários protegida: apenas para admins/moderadores
   const usersRef = useMemoFirebase(() => 
     isAdminOrHigher ? collection(firestore, 'app_users') : null, 
     [firestore, isAdminOrHigher]
@@ -110,14 +121,13 @@ export default function EscalasPage() {
     toast({ title: "Escala criada", description: "A nova escala foi adicionada com sucesso." })
   }
 
-  const handleDelete = (id: string) => {
-    if (!isAdminOrHigher) return
-
-    if (window.confirm("Deseja realmente excluir esta escala?")) {
-      const docRef = doc(firestore, 'duty_rosters', id)
-      deleteDocumentNonBlocking(docRef)
-      toast({ title: "Escala removida", variant: "destructive" })
-    }
+  const confirmDelete = () => {
+    if (!idToDelete) return
+    const docRef = doc(firestore, 'duty_rosters', idToDelete)
+    deleteDocumentNonBlocking(docRef)
+    toast({ title: "Escala removida", variant: "destructive" })
+    setIdToDelete(null)
+    setIsDeleteDialogOpen(false)
   }
 
   const sortedRosters = rosters ? [...rosters].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()) : []
@@ -292,9 +302,9 @@ export default function EscalasPage() {
                           variant="ghost" 
                           size="icon" 
                           className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            handleDelete(escala.id)
+                          onClick={() => {
+                            setIdToDelete(escala.id)
+                            setIsDeleteDialogOpen(true)
                           }}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -315,6 +325,23 @@ export default function EscalasPage() {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Isso excluirá permanentemente a escala selecionada.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

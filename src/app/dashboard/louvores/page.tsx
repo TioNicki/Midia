@@ -18,6 +18,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
@@ -34,6 +44,8 @@ export default function LouvoresPage() {
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState("")
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [idToDelete, setIdToDelete] = useState<string | null>(null)
   const [newSong, setNewSong] = useState({ title: "", artist: "", lyrics: "", notes: "" })
 
   const userProfileRef = useMemoFirebase(() => 
@@ -63,14 +75,13 @@ export default function LouvoresPage() {
     toast({ title: "Louvor adicionado", description: "A música foi cadastrada no banco de dados." })
   }
 
-  const handleDelete = (id: string) => {
-    if (!isAdminOrHigher) return
-
-    if (window.confirm("Deseja remover este louvor permanentemente?")) {
-      const docRef = doc(firestore, 'praise_songs', id)
-      deleteDocumentNonBlocking(docRef)
-      toast({ title: "Louvor removido", variant: "destructive" })
-    }
+  const confirmDelete = () => {
+    if (!idToDelete) return
+    const docRef = doc(firestore, 'praise_songs', idToDelete)
+    deleteDocumentNonBlocking(docRef)
+    toast({ title: "Louvor removido", variant: "destructive" })
+    setIdToDelete(null)
+    setIsDeleteDialogOpen(false)
   }
 
   return (
@@ -176,9 +187,9 @@ export default function LouvoresPage() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem 
                         className="text-destructive focus:text-destructive cursor-pointer"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          handleDelete(song.id)
+                        onClick={() => {
+                          setIdToDelete(song.id)
+                          setIsDeleteDialogOpen(true)
                         }}
                       >
                         <Trash2 className="mr-2 h-4 w-4" /> Excluir permanentemente
@@ -204,6 +215,23 @@ export default function LouvoresPage() {
           )}
         </div>
       )}
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Louvor?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta música será removida permanentemente do banco de dados. Letras e notas associadas serão perdidas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Manter Louvor</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Confirmar Exclusão
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

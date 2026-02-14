@@ -4,7 +4,7 @@
 import { useState } from "react"
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
 import { collection, doc } from "firebase/firestore"
-import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates"
+import { addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -21,9 +21,20 @@ import {
   User, 
   Calendar,
   CheckCircle2,
-  Loader2
+  Loader2,
+  Trash2
 } from "lucide-react"
 import { format } from "date-fns"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export default function FeedbackPage() {
   const firestore = useFirestore()
@@ -33,6 +44,8 @@ export default function FeedbackPage() {
   const [loading, setLoading] = useState(false)
   const [type, setType] = useState("elogio")
   const [message, setMessage] = useState("")
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [idToDelete, setIdToDelete] = useState<string | null>(null)
 
   const userProfileRef = useMemoFirebase(() => 
     user ? doc(firestore, 'app_users', user.uid) : null, 
@@ -40,8 +53,8 @@ export default function FeedbackPage() {
   )
   const { data: profile } = useDoc(userProfileRef)
   const isAdminOrHigher = profile?.role === 'admin' || profile?.role === 'moderator'
+  const isModerator = profile?.role === 'moderator'
 
-  // Só busca feedbacks se o usuário for admin ou moderador
   const feedbacksRef = useMemoFirebase(() => 
     isAdminOrHigher ? collection(firestore, 'feedback') : null, 
     [firestore, isAdminOrHigher]
@@ -73,6 +86,15 @@ export default function FeedbackPage() {
       .catch(() => {
         setLoading(false)
       })
+  }
+
+  const confirmDelete = () => {
+    if (!idToDelete) return
+    const docRef = doc(firestore, 'feedback', idToDelete)
+    deleteDocumentNonBlocking(docRef)
+    toast({ title: "Feedback removido", variant: "destructive" })
+    setIdToDelete(null)
+    setIsDeleteDialogOpen(false)
   }
 
   const getTypeIcon = (type: string) => {
@@ -126,9 +148,29 @@ export default function FeedbackPage() {
                       </CardDescription>
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" className="text-primary font-bold">
-                    <CheckCircle2 className="mr-2 h-4 w-4" /> Marcar como Lido
-                  </Button>
+                  <div className="flex gap-2">
+                    {isModerator && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-destructive hover:bg-destructive/10"
+                        onClick={() => {
+                          setIdToDelete(fb.id)
+                          setIsDeleteDialogOpen(true)
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-primary font-bold hover:bg-primary/5"
+                      onClick={() => toast({ title: "Feedback lido", description: "Mensagem marcada como visualizada." })}
+                    >
+                      <CheckCircle2 className="mr-2 h-4 w-4" /> Lido
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm leading-relaxed text-foreground bg-muted/30 p-4 rounded-lg border italic">
@@ -144,6 +186,23 @@ export default function FeedbackPage() {
             )}
           </div>
         )}
+
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir Feedback?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta mensagem será removida permanentemente. Use apenas se o feedback for irrelevante ou duplicado.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Confirmar Exclusão
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     )
   }

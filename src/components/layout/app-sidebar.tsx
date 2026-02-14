@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -15,7 +14,8 @@ import {
   Crown,
   Briefcase,
   Sun,
-  Moon
+  Moon,
+  Sparkles
 } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
@@ -38,6 +38,7 @@ const baseMenuItems = [
   { title: "Escalas", icon: CalendarDays, path: "/dashboard/escalas" },
   { title: "Louvores", icon: Music, path: "/dashboard/louvores" },
   { title: "Datas Importantes", icon: Bell, path: "/dashboard/eventos" },
+  { title: "Assistente IA", icon: Sparkles, path: "/dashboard/ia-assistente" },
   { title: "Feedback", icon: MessageSquare, path: "/dashboard/feedback" },
 ]
 
@@ -96,7 +97,7 @@ export function AppSidebar() {
       <SidebarHeader className="p-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" className="hover:bg-sidebar-accent">
+            <SidebarMenuButton size="lg" className="hover:bg-sidebar-accent" onClick={() => router.push("/")}>
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                 <Music className="size-4" />
               </div>

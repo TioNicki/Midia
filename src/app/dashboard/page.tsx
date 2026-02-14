@@ -1,6 +1,7 @@
 
 "use client"
 
+import { useState, useEffect } from "react"
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
 import { collection, doc } from "firebase/firestore"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -14,6 +15,11 @@ export default function DashboardOverview() {
   const firestore = useFirestore()
   const { user } = useUser()
   const router = useRouter()
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const userProfileRef = useMemoFirebase(() => 
     user ? doc(firestore, 'app_users', user.uid) : null, 
@@ -37,9 +43,18 @@ export default function DashboardOverview() {
   )
   const { data: feedbacks } = useCollection(feedbacksRef)
 
+  if (!isMounted || isProfileLoading) {
+    return (
+      <div className="flex h-full items-center justify-center p-20">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    )
+  }
+
   // Pegar a escala mais próxima (ordenada por data)
   const sortedRosters = rosters ? [...rosters].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()) : []
-  const nextRoster = sortedRosters.find(r => new Date(r.date + 'T23:59:59') >= new Date()) || sortedRosters[0]
+  const now = new Date()
+  const nextRoster = sortedRosters.find(r => new Date(r.date + 'T23:59:59') >= now) || sortedRosters[0]
 
   const isUserEscalated = nextRoster?.assignments?.some((as: any) => as.userId === user?.uid)
 
@@ -69,14 +84,6 @@ export default function DashboardOverview() {
       color: "text-teal-500" 
     },
   ]
-
-  if (isProfileLoading) {
-    return (
-      <div className="flex h-full items-center justify-center p-20">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-      </div>
-    )
-  }
 
   return (
     <div className="space-y-6">

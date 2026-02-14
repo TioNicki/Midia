@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
 import { collection, doc } from "firebase/firestore"
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates"
@@ -52,6 +52,7 @@ export default function EscalasPage() {
   const firestore = useFirestore()
   const { user } = useUser()
   const { toast } = useToast()
+  const [isMounted, setIsMounted] = useState(false)
   
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -61,6 +62,10 @@ export default function EscalasPage() {
   const [newRoster, setNewRoster] = useState({ description: "", date: "" })
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [currentAssignment, setCurrentAssignment] = useState({ userId: "", roleId: "" })
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const userProfileRef = useMemoFirebase(() => 
     user ? doc(firestore, 'app_users', user.uid) : null, 
@@ -81,6 +86,8 @@ export default function EscalasPage() {
 
   const rostersRef = useMemoFirebase(() => collection(firestore, 'duty_rosters'), [firestore])
   const { data: rosters, isLoading } = useCollection(rostersRef)
+
+  if (!isMounted) return null
 
   const handleAddAssignment = () => {
     if (!currentAssignment.userId || !currentAssignment.roleId) {

@@ -1,16 +1,18 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
-import { collection, doc, query, where, getDocs, deleteDoc, writeBatch } from "firebase/firestore"
+import { collection, doc, query, where, getDocs, writeBatch } from "firebase/firestore"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { UserCheck, Shield, ShieldAlert, Loader2, Trash2, Mail, Crown, AlertCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates"
+import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,10 +28,15 @@ export default function UsuariosPage() {
   const firestore = useFirestore()
   const { user: currentUser } = useUser()
   const { toast } = useToast()
+  const [isMounted, setIsMounted] = useState(false)
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [idToDelete, setIdToDelete] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const userProfileRef = useMemoFirebase(() => 
     currentUser ? doc(firestore, 'app_users', currentUser.uid) : null, 
@@ -44,6 +51,8 @@ export default function UsuariosPage() {
     [firestore, isAdminOrHigher]
   )
   const { data: users, isLoading } = useCollection(usersRef)
+
+  if (!isMounted) return null
 
   const handleApprove = (userId: string) => {
     if (!isModerator) return
@@ -81,7 +90,6 @@ export default function UsuariosPage() {
 
     setIsDeleting(true)
     try {
-      // 1. Limpar feedbacks do usuário para economizar espaço
       const feedbackQuery = query(collection(firestore, 'feedback'), where('submittedByUserId', '==', idToDelete))
       const feedbackSnap = await getDocs(feedbackQuery)
       
@@ -90,21 +98,26 @@ export default function UsuariosPage() {
         batch.delete(fbDoc.ref)
       })
       
-      // 2. Excluir o documento do usuário
       const userRef = doc(firestore, 'app_users', idToDelete)
       batch.delete(userRef)
 
-      await batch.commit()
+      batch.commit()
+        .catch(async (error) => {
+          errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: `app_users/${idToDelete}`,
+            operation: 'delete'
+          }));
+        });
 
       toast({ 
-        title: "Usuário e dados removidos", 
-        description: "Lembre-se de remover o e-mail no Console do Firebase para permitir novo cadastro." 
+        title: "Remoção solicitada", 
+        description: "Os dados do usuário estão sendo removidos. Lembre-se de remover o e-mail no Console do Firebase." 
       })
     } catch (error) {
       toast({ 
         variant: "destructive", 
-        title: "Erro ao excluir", 
-        description: "Não foi possível remover todos os dados do usuário." 
+        title: "Erro ao iniciar exclusão", 
+        description: "Não foi possível processar a remoção dos dados." 
       })
     } finally {
       setIsDeleting(false)

@@ -22,52 +22,62 @@ export default function LoginPage() {
   
   const { auth } = useAuth()
   const { firestore } = useFirestore()
-  const { user } = useUser()
+  const { user, isUserLoading } = useUser()
   const router = useRouter()
   const { toast } = useToast()
 
+  // Redireciona se o usuário já estiver logado
   useEffect(() => {
-    if (user) {
+    if (!isUserLoading && user) {
       router.push("/dashboard")
     }
-  }, [user, router])
+  }, [user, isUserLoading, router])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (loading) return
     setLoading(true)
 
     try {
       await signInWithEmailAndPassword(auth, email, password)
+      toast({ title: "Bem-vindo!", description: "Login realizado com sucesso." })
       router.push("/dashboard")
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Erro ao entrar",
-        description: "Verifique suas credenciais.",
+        description: "Verifique suas credenciais ou se a conta foi aprovada.",
       })
-    } finally {
       setLoading(false)
     }
   }
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (loading) return
+    
     if (!name || !email || !password) {
       toast({ variant: "destructive", title: "Campos obrigatórios", description: "Preencha todos os campos." })
+      return
+    }
+
+    if (password.length < 6) {
+      toast({ variant: "destructive", title: "Senha curta", description: "A senha deve ter no mínimo 6 caracteres." })
       return
     }
     
     setLoading(true)
 
     try {
+      // 1. Cria o usuário no Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       const uid = userCredential.user.uid
 
+      // 2. Atualiza o nome no perfil do Auth
       await updateProfile(userCredential.user, { displayName: name })
 
+      // 3. Cria o documento no Firestore (como ADMIN e APROVADO para o seu primeiro acesso)
       const userRef = doc(firestore, 'app_users', uid)
-      
-      // Criando o perfil como ADMIN e APROVADO para facilitar o setup inicial
       await setDoc(userRef, {
         id: uid,
         externalAuthId: uid,
@@ -78,19 +88,29 @@ export default function LoginPage() {
       })
 
       toast({
-        title: "Conta de Administrador criada!",
-        description: "Você já pode acessar o painel de controle.",
+        title: "Conta criada com sucesso!",
+        description: "Você já é um administrador e pode acessar o painel.",
       })
+      
+      // 4. Redireciona manualmente após garantir que o Firestore foi atualizado
       router.push("/dashboard")
     } catch (error: any) {
+      console.error("Erro no cadastro:", error)
       toast({
         variant: "destructive",
         title: "Erro ao criar conta",
-        description: error.message,
+        description: error.message || "Ocorreu um erro inesperado.",
       })
-    } finally {
       setLoading(false)
     }
+  }
+
+  if (isUserLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    )
   }
 
   return (
@@ -124,6 +144,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    autoComplete="email"
                   />
                 </div>
                 <div className="space-y-2">
@@ -134,6 +155,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    autoComplete="current-password"
                   />
                 </div>
                 <Button className="w-full h-11 text-lg font-bold" type="submit" disabled={loading}>
@@ -152,6 +174,7 @@ export default function LoginPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
+                    autoComplete="name"
                   />
                 </div>
                 <div className="space-y-2">
@@ -163,6 +186,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    autoComplete="email"
                   />
                 </div>
                 <div className="space-y-2">
@@ -174,6 +198,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    autoComplete="new-password"
                   />
                 </div>
                 <Button className="w-full h-11 text-lg font-bold" type="submit" disabled={loading}>

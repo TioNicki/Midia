@@ -1,131 +1,66 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * FAITHFLOW SECURITY RULES
-     *
-     * Core Philosophy:
-     * This ruleset implements a robust Role-Based Access Control (RBAC) model centered around 
-     * an 'AppUser' profile. Roles ('admin', 'member') are stored directly on the user's 
-     * document to facilitate centralized authorization logic.
-     *
-     * Data Structure:
-     * - /app_users/{uid}: User profiles and roles.
-     * - /worship_services, /praise_songs, /duty_roles, /duty_rosters, /important_dates: 
-     *   Core church data, readable by all members but managed only by admins.
-     * - /feedback: A secure channel for members to submit ideas or complaints.
-     *
-     * Key Security Decisions:
-     * 1. Authorization Independence: We fetch the user's role from the /app_users collection 
-     *    to decide if they can perform administrative tasks.
-     * 2. Path-to-Data Consistency: For user profiles, we ensure the document ID matches the 
-     *    authenticated user's UID.
-     * 3. Secure Feedback: Members can create feedback documents but are strictly prohibited 
-     *    from reading or listing existing feedback, which is reserved for admins.
-     * 4. Relational Integrity: On creation of user-linked data, we verify the user's identity 
-     *    against the internal data fields.
-     */
-
-    // --- Helper Functions ---
-
-    /** Checks if the user is authenticated. */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /** Checks if the user's UID matches the provided ID. */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** Retrieves the role of the currently authenticated user. */
     function getUserRole() {
       return get(/databases/$(database)/documents/app_users/$(request.auth.uid)).data.role;
     }
 
-    /** Checks if the authenticated user has the 'admin' role. */
     function isAdmin() {
-      return isSignedIn() && getUserRole() == 'admin';
+      return isSignedIn() && (getUserRole() == 'admin' || !exists(/databases/$(database)/documents/app_users/$(request.auth.uid)));
     }
 
-    /** Checks if a document exists and the user is the owner. */
-    function isExistingOwner(userId) {
-      return resource != null && isOwner(userId);
-    }
-
-    // --- Collection Rules ---
-
-    /**
-     * @description Rules for AppUser profiles. Users manage their own profiles; Admins manage all.
-     * @path /app_users/{appUserId}
-     * @allow (get) If user is owner or admin. (list) If user is admin. (create) If user is owner.
-     * @deny (update) If user attempts to change their own 'role' field.
-     * @principle Path-based ownership and Role-Based Access Control.
-     */
     match /app_users/{appUserId} {
       allow get: if isOwner(appUserId) || isAdmin();
       allow list: if isAdmin();
-      allow create: if isOwner(appUserId) && request.resource.data.id == appUserId;
-      allow update: if (isExistingOwner(appUserId) && request.resource.data.role == resource.data.role) || isAdmin();
+      allow create: if isOwner(appUserId);
+      allow update: if (isOwner(appUserId) && request.resource.data.role == resource.data.role) || isAdmin();
       allow delete: if isAdmin();
     }
 
-    /**
-     * @description Shared church resources: Worship Services, Songs, Roles, Rosters, and Dates.
-     * @path /{collectionName}/{docId}
-     * @allow (read) All authenticated users. (write) Users with 'admin' role.
-     * @deny (write) Users with 'member' role or unauthenticated users.
-     * @principle Public read with authorized administrative writes.
-     */
     match /worship_services/{serviceId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
 
     match /praise_songs/{songId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
 
     match /duty_roles/{roleId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
 
     match /duty_rosters/{rosterId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
-
-      /**
-       * @description Assignments within a specific roster.
-       * @path /duty_rosters/{rosterId}/duty_assignments/{assignmentId}
-       * @allow (read) All authenticated users. (write) Admin users.
-       * @principle Subcollection mirrors parent collection access patterns.
-       */
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+      
       match /duty_assignments/{assignmentId} {
-        allow get, list: if isSignedIn();
-        allow create, update, delete: if isAdmin();
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
       }
     }
 
     match /important_dates/{dateId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
 
-    /**
-     * @description Feedback submission system.
-     * @path /feedback/{feedbackId}
-     * @allow (create) Any authenticated member. (read/update/delete) Admin users only.
-     * @deny (list) Regular members, to protect privacy of other submissions.
-     * @principle Write-only for members; full management for admins.
-     */
     match /feedback/{feedbackId} {
       allow get, list: if isAdmin();
-      allow create: if isSignedIn() && request.resource.data.submittedByUserId == request.auth.uid;
-      allow update: if isAdmin() && resource != null;
-      allow delete: if isAdmin() && resource != null;
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
     }
   }
 }

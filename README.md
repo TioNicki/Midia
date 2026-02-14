@@ -19,6 +19,10 @@ Este projeto **não utiliza Cloud SQL**. Todos os dados estão armazenados no ec
 
 Para visualizar ou editar os dados brutos, acesse o [Console do Firebase](https://console.firebase.google.com/) e localize o seu projeto.
 
+## 🚀 Portabilidade (Netlify / Vercel / etc)
+
+Este projeto é totalmente portátil. Como o banco de dados (Firestore) e a autenticação são serviços de nuvem independentes, você pode hospedar este site em qualquer plataforma (Netlify, Vercel, Firebase App Hosting, etc). O site continuará se conectando aos mesmos dados através das chaves configuradas em `src/firebase/config.ts`.
+
 ## 👥 Hierarquia de Acesso
 
 - **Moderador**: Acesso total, incluindo gestão de usuários e criação de funções.

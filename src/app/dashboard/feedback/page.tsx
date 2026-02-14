@@ -26,7 +26,7 @@ import {
 import { format } from "date-fns"
 
 export default function FeedbackPage() {
-  const { firestore } = useFirestore()
+  const firestore = useFirestore()
   const { user } = useUser()
   const { toast } = useToast()
   

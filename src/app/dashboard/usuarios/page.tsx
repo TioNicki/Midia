@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast"
 import { updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 
 export default function UsuariosPage() {
-  const { firestore } = useFirestore()
+  const firestore = useFirestore()
   const { user: currentUser } = useUser()
   const { toast } = useToast()
 

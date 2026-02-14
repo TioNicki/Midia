@@ -12,7 +12,7 @@ import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 
 export default function EscalasPage() {
-  const { firestore } = useFirestore()
+  const firestore = useFirestore()
   const { user } = useUser()
 
   const userProfileRef = useMemoFirebase(() => 

@@ -1,17 +1,16 @@
 
 "use client"
 
-import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase"
+import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
 import { collection, doc } from "firebase/firestore"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Music, Plus, Search, MoreVertical, PlayCircle, Loader2 } from "lucide-react"
 import { useState } from "react"
-import { useDoc } from "@/firebase"
 
 export default function LouvoresPage() {
-  const { firestore } = useFirestore()
+  const firestore = useFirestore()
   const { user } = useUser()
   const [searchTerm, setSearchTerm] = useState("")
 

@@ -26,8 +26,8 @@
         },
         "role": {
           "type": "string",
-          "description": "The role of the user within the FaithFlow application ('admin', 'member').",
-          "enum": ["admin", "member"]
+          "description": "The role of the user within the FaithFlow application ('moderator', 'admin', 'member').",
+          "enum": ["moderator", "admin", "member"]
         },
         "status": {
           "type": "string",

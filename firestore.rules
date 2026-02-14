@@ -11,11 +11,14 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function isModerator() {
+      return isSignedIn() && get(/databases/$(database)/documents/app_users/$(request.auth.uid)).data.role == 'moderator';
+    }
+
     function isAdmin() {
-      // Permite acesso se o usuário for admin OU se o documento de perfil ainda não existir (para o primeiro cadastro)
       return isSignedIn() && (
-        !exists(/databases/$(database)/documents/app_users/$(request.auth.uid)) || 
-        get(/databases/$(database)/documents/app_users/$(request.auth.uid)).data.role == 'admin'
+        get(/databases/$(database)/documents/app_users/$(request.auth.uid)).data.role == 'admin' ||
+        get(/databases/$(database)/documents/app_users/$(request.auth.uid)).data.role == 'moderator'
       );
     }
 
@@ -23,8 +26,14 @@ service cloud.firestore {
       allow get: if isOwner(appUserId) || isAdmin();
       allow list: if isAdmin();
       allow create: if isOwner(appUserId);
-      allow update: if (isOwner(appUserId) && request.resource.data.role == resource.data.role) || isAdmin();
-      allow delete: if isAdmin();
+      
+      // Apenas moderadores podem mudar roles ou status de terceiros.
+      // Ninguém pode mudar seu próprio role para evitar auto-remoção de poder.
+      allow update: if (isModerator() && request.resource.data.id == resource.data.id && request.auth.uid != appUserId) || 
+                   (isOwner(appUserId) && request.resource.data.role == resource.data.role) ||
+                   (!exists(/databases/$(database)/documents/app_users/$(appUserId)) && isOwner(appUserId));
+      
+      allow delete: if isModerator() && request.auth.uid != appUserId;
     }
 
     match /worship_services/{serviceId} {
@@ -60,7 +69,7 @@ service cloud.firestore {
     match /feedback/{feedbackId} {
       allow get, list: if isAdmin();
       allow create: if isSignedIn();
-      allow update, delete: if isAdmin();
+      allow update, delete: if isModerator();
     }
   }
 }

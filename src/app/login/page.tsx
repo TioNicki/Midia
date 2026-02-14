@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -67,24 +68,27 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
+      // Cria o usuário no Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       const uid = userCredential.user.uid
 
       await updateProfile(userCredential.user, { displayName: name })
 
+      // CRIA O PERFIL COMO MODERADOR PARA VOCÊ RECUPERAR O ACESSO
+      // Após criar sua conta, podemos mudar isso para 'member' e 'pending'
       const userRef = doc(firestore, 'app_users', uid)
       await setDoc(userRef, {
         id: uid,
         externalAuthId: uid,
         name: name,
         email: email,
-        role: 'admin',
+        role: 'moderator', // Temporariamente como moderator para recuperação
         status: 'approved'
       })
 
       toast({
         title: "Conta criada com sucesso!",
-        description: "Você já é um administrador e pode acessar o painel.",
+        description: "Você é um Moderador e pode gerenciar todos os usuários.",
       })
       
       router.push("/dashboard")
@@ -196,7 +200,7 @@ export default function LoginPage() {
                   />
                 </div>
                 <Button className="w-full h-11 text-lg font-bold" type="submit" disabled={loading}>
-                  {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <><UserPlus className="mr-2 h-5 w-5" /> Criar Conta Admin</>}
+                  {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <><UserPlus className="mr-2 h-5 w-5" /> Criar Conta Admin/Mod</>}
                 </Button>
               </form>
             </TabsContent>

@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -10,7 +11,8 @@ import {
   LogOut,
   User,
   ShieldCheck,
-  Users
+  Users,
+  Crown
 } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
@@ -49,14 +51,15 @@ export function AppSidebar() {
     [firestore, user]
   )
   const { data: profile } = useDoc(userProfileRef)
-  const isAdmin = profile?.role === 'admin'
+  const isAdminOrHigher = profile?.role === 'admin' || profile?.role === 'moderator'
+  const isModerator = profile?.role === 'moderator'
 
   const handleLogout = async () => {
     await signOut(auth)
     router.push("/login")
   }
 
-  const menuItems = isAdmin 
+  const menuItems = isAdminOrHigher 
     ? [...baseMenuItems, { title: "Usuários", icon: Users, path: "/dashboard/usuarios" }]
     : baseMenuItems
 
@@ -103,11 +106,13 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <div className="flex items-center gap-3 px-2 py-2 mb-4 overflow-hidden group-data-[collapsible=icon]:hidden">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sidebar-accent/20">
-                {isAdmin ? <ShieldCheck className="h-5 w-5 text-accent" /> : <User className="h-5 w-5 text-white" />}
+                {isModerator ? <Crown className="h-5 w-5 text-amber-500" /> : isAdminOrHigher ? <ShieldCheck className="h-5 w-5 text-accent" /> : <User className="h-5 w-5 text-white" />}
               </div>
               <div className="flex flex-col min-w-0">
                 <span className="text-sm font-medium truncate">{profile?.name || user?.email?.split('@')[0]}</span>
-                <span className="text-xs opacity-70 truncate">{isAdmin ? "Administrador" : "Membro"}</span>
+                <span className="text-xs opacity-70 truncate">
+                  {isModerator ? "Moderador" : isAdminOrHigher ? "Administrador" : "Membro"}
+                </span>
               </div>
             </div>
           </SidebarMenuItem>

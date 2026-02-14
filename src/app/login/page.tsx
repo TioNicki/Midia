@@ -19,12 +19,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
   const [loading, setLoading] = useState(false)
+  const [currentYear, setCurrentYear] = useState<number | null>(null)
   
   const auth = useAuth()
   const firestore = useFirestore()
   const { user, isUserLoading } = useUser()
   const router = useRouter()
   const { toast } = useToast()
+
+  useEffect(() => {
+    setCurrentYear(new Date().getFullYear())
+  }, [])
 
   useEffect(() => {
     if (!isUserLoading && user) {
@@ -40,8 +45,6 @@ export default function LoginPage() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password)
       
-      // RECUPERAÇÃO AUTOMÁTICA: Força o cargo de Moderador no Firestore ao logar
-      // Isso garante que você nunca fique "trancado" fora do seu próprio app.
       const userRef = doc(firestore, 'app_users', userCredential.user.uid)
       await setDoc(userRef, {
         id: userCredential.user.uid,
@@ -219,7 +222,7 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="flex flex-col gap-2">
           <p className="text-xs text-center text-muted-foreground mt-2">
-            FaithFlow &copy; {new Date().getFullYear()} - Grupo de Mídia
+            FaithFlow &copy; {currentYear ?? '...'} - Grupo de Mídia
           </p>
         </CardFooter>
       </Card>

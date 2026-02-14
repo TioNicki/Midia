@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
 import { collection, doc } from "firebase/firestore"
 import { addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates"
@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { Textarea } from "@/components/textarea"
 import { useToast } from "@/hooks/use-toast"
 
 export default function EventosPage() {
@@ -30,6 +30,11 @@ export default function EventosPage() {
   const { toast } = useToast()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [newEvent, setNewEvent] = useState({ title: "", description: "", date: "", location: "" })
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const userProfileRef = useMemoFirebase(() => 
     user ? doc(firestore, 'app_users', user.uid) : null, 
@@ -63,6 +68,8 @@ export default function EventosPage() {
       toast({ title: "Evento removido", variant: "destructive" })
     }
   }
+
+  if (!isMounted) return null
 
   return (
     <div className="space-y-6">
@@ -139,13 +146,18 @@ export default function EventosPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {events?.map((evento) => {
-            const date = evento.date ? new Date(evento.date) : new Date()
+            const date = evento.date ? new Date(evento.date) : null
             return (
               <Card key={evento.id} className="flex flex-col md:flex-row overflow-hidden hover:shadow-lg transition-shadow relative">
                 <div className="bg-primary/5 w-full md:w-40 flex flex-col items-center justify-center p-6 text-primary border-r border-primary/10">
                   <Calendar className="h-10 w-10 mb-2" />
-                  <span className="text-xl font-bold">{format(date, 'dd')}</span>
-                  <span className="text-sm font-medium uppercase">{format(date, 'MMM / yyyy', { locale: ptBR })}</span>
+                  {date && (
+                    <>
+                      <span className="text-xl font-bold">{format(date, 'dd')}</span>
+                      <span className="text-sm font-medium uppercase">{format(date, 'MMM / yyyy', { locale: ptBR })}</span>
+                    </>
+                  )}
+                  {!date && <span className="text-xs italic">Sem data</span>}
                 </div>
                 <div className="flex-1 p-6">
                   <div className="flex justify-between items-start mb-2">

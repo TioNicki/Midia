@@ -39,12 +39,12 @@ export default function FeedbackPage() {
     [firestore, user]
   )
   const { data: profile } = useDoc(userProfileRef)
-  const isAdmin = profile?.role === 'admin'
+  const isAdminOrHigher = profile?.role === 'admin' || profile?.role === 'moderator'
 
-  // Só busca feedbacks se o usuário for admin
+  // Só busca feedbacks se o usuário for admin ou moderador
   const feedbacksRef = useMemoFirebase(() => 
-    isAdmin ? collection(firestore, 'feedback') : null, 
-    [firestore, isAdmin]
+    isAdminOrHigher ? collection(firestore, 'feedback') : null, 
+    [firestore, isAdminOrHigher]
   )
   const { data: feedbacks, isLoading: isLoadingFeedbacks } = useCollection(feedbacksRef)
 
@@ -93,7 +93,7 @@ export default function FeedbackPage() {
     }
   }
 
-  if (isAdmin) {
+  if (isAdminOrHigher) {
     return (
       <div className="space-y-6">
         <div>

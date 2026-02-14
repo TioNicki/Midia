@@ -30,7 +30,11 @@ export default function DashboardOverview() {
   const eventsRef = useMemoFirebase(() => collection(firestore, 'important_dates'), [firestore])
   const { data: events } = useCollection(eventsRef)
 
-  const feedbacksRef = useMemoFirebase(() => collection(firestore, 'feedback'), [firestore])
+  // Consulta de feedbacks protegida: apenas para admins/moderadores
+  const feedbacksRef = useMemoFirebase(() => 
+    isAdminOrHigher ? collection(firestore, 'feedback') : null, 
+    [firestore, isAdminOrHigher]
+  )
   const { data: feedbacks } = useCollection(feedbacksRef)
 
   const stats = [
@@ -54,7 +58,7 @@ export default function DashboardOverview() {
     },
     { 
       title: "Feedbacks", 
-      value: `${feedbacks?.length || 0} Mensagens`, 
+      value: isAdminOrHigher ? `${feedbacks?.length || 0} Mensagens` : "Acesso Restrito", 
       icon: MessageSquare, 
       color: "text-teal-500" 
     },

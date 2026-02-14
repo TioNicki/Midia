@@ -58,7 +58,11 @@ export default function EscalasPage() {
   const rolesRef = useMemoFirebase(() => collection(firestore, 'duty_roles'), [firestore])
   const { data: roles } = useCollection(rolesRef)
 
-  const usersRef = useMemoFirebase(() => collection(firestore, 'app_users'), [firestore])
+  // Consulta de usuários protegida: apenas para admins/moderadores
+  const usersRef = useMemoFirebase(() => 
+    isAdminOrHigher ? collection(firestore, 'app_users') : null, 
+    [firestore, isAdminOrHigher]
+  )
   const { data: allUsers } = useCollection(usersRef)
   const approvedUsers = allUsers?.filter(u => u.status === 'approved') || []
 

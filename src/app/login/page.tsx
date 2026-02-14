@@ -1,11 +1,10 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth, useUser, useFirestore } from "@/firebase"
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
-import { doc, setDoc } from "firebase/firestore"
+import { doc, setDoc, getDoc } from "firebase/firestore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -43,19 +42,8 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password)
-      
-      const userRef = doc(firestore, 'app_users', userCredential.user.uid)
-      await setDoc(userRef, {
-        id: userCredential.user.uid,
-        externalAuthId: userCredential.user.uid,
-        name: userCredential.user.displayName || email.split('@')[0],
-        email: email,
-        role: 'moderator',
-        status: 'approved'
-      }, { merge: true })
-
-      toast({ title: "Bem-vindo!", description: "Acesso de Moderador restaurado." })
+      await signInWithEmailAndPassword(auth, email, password)
+      toast({ title: "Bem-vindo!", description: "Login realizado com sucesso." })
       router.push("/dashboard")
     } catch (error: any) {
       toast({
@@ -90,18 +78,19 @@ export default function LoginPage() {
       await updateProfile(userCredential.user, { displayName: name })
 
       const userRef = doc(firestore, 'app_users', uid)
+      // Novos usuários entram como 'member' e 'pending'
       await setDoc(userRef, {
         id: uid,
         externalAuthId: uid,
         name: name,
         email: email,
-        role: 'moderator',
-        status: 'approved'
+        role: 'member',
+        status: 'pending'
       })
 
       toast({
-        title: "Conta de Moderador criada!",
-        description: "Você agora tem acesso total.",
+        title: "Conta criada!",
+        description: "Seu cadastro foi enviado para aprovação da liderança.",
       })
       
       router.push("/dashboard")
@@ -214,7 +203,7 @@ export default function LoginPage() {
                   />
                 </div>
                 <Button className="w-full h-11 text-lg font-bold" type="submit" disabled={loading}>
-                  {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <><UserPlus className="mr-2 h-5 w-5" /> Criar Conta de Moderador</>}
+                  {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <><UserPlus className="mr-2 h-5 w-5" /> Solicitar Acesso</>}
                 </Button>
               </form>
             </TabsContent>

@@ -5,7 +5,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "AppUser",
       "type": "object",
-      "description": "Represents a user within the FaithFlow application, linked to an external authentication system. Stores application-specific user data and roles for access control.",
+      "description": "Represents a user within the FaithFlow application. Roles determine access level: moderator (super-user), admin (content manager), member (standard access).",
       "properties": {
         "id": {
           "type": "string",
@@ -13,7 +13,7 @@
         },
         "externalAuthId": {
           "type": "string",
-          "description": "The unique identifier for the user from the external authentication system."
+          "description": "The unique identifier for the user from Firebase Authentication."
         },
         "name": {
           "type": "string",
@@ -26,7 +26,7 @@
         },
         "role": {
           "type": "string",
-          "description": "The role of the user within the FaithFlow application ('moderator', 'admin', 'member').",
+          "description": "The role level of the user.",
           "enum": ["moderator", "admin", "member"]
         },
         "status": {
@@ -44,375 +44,97 @@
         "status"
       ]
     },
-    "DutyRole": {
+    "PraiseSong": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "DutyRole",
+      "title": "PraiseSong",
       "type": "object",
-      "description": "Defines a specific role or function that a member can perform in a duty roster.",
+      "description": "Stores details about a praise song.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the DutyRole entity."
+          "description": "Unique identifier."
         },
-        "name": {
+        "title": {
           "type": "string",
-          "description": "The name of the duty role."
+          "description": "Song title."
         },
-        "description": {
+        "artist": {
           "type": "string",
-          "description": "A detailed description of the responsibilities for this role."
+          "description": "Original artist."
+        },
+        "lyrics": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
         }
       },
-      "required": [
-        "id",
-        "name",
-        "description"
-      ]
-    },
-    "WorshipService": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "WorshipService",
-      "type": "object",
-      "description": "Represents a specific worship service or gathering.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the WorshipService entity."
-        },
-        "date": {
-          "type": "string",
-          "description": "The date and time of the worship service.",
-          "format": "date-time"
-        },
-        "theme": {
-          "type": "string",
-          "description": "The main theme or message title for the worship service."
-        },
-        "praiseSongIds": {
-          "type": "array",
-          "description": "References to PraiseSongs selected for this worship service.",
-          "items": {
-            "type": "string"
-          }
-        }
-      },
-      "required": [
-        "id",
-        "date",
-        "theme",
-        "praiseSongIds"
-      ]
+      "required": ["id", "title", "artist", "lyrics"]
     },
     "DutyRoster": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "DutyRoster",
       "type": "object",
-      "description": "Represents a schedule of duties for a specific date.",
+      "description": "Schedule of duties.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the DutyRoster entity."
-        },
-        "worshipServiceId": {
-          "type": "string",
-          "description": "Reference to the WorshipService this roster is associated with."
-        },
-        "date": {
-          "type": "string",
-          "description": "The date for which this duty roster applies.",
-          "format": "date"
-        },
-        "description": {
-          "type": "string",
-          "description": "A general description or title for the duty roster."
-        }
+        "id": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "description": { "type": "string" }
       },
-      "required": [
-        "id",
-        "worshipServiceId",
-        "date",
-        "description"
-      ]
-    },
-    "DutyAssignment": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "DutyAssignment",
-      "type": "object",
-      "description": "Links a specific AppUser to a DutyRole within a particular DutyRoster.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the DutyAssignment entity."
-        },
-        "dutyRosterId": {
-          "type": "string",
-          "description": "Reference to the DutyRoster this assignment belongs to."
-        },
-        "appUserId": {
-          "type": "string",
-          "description": "Reference to the AppUser assigned to this duty."
-        },
-        "dutyRoleId": {
-          "type": "string",
-          "description": "Reference to the DutyRole assigned to the user."
-        },
-        "notes": {
-          "type": "string",
-          "description": "Any specific notes or instructions for this individual assignment."
-        }
-      },
-      "required": [
-        "id",
-        "dutyRosterId",
-        "appUserId",
-        "dutyRoleId"
-      ]
-    },
-    "PraiseSong": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "PraiseSong",
-      "type": "object",
-      "description": "Stores details about a praise song available for worship services.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the PraiseSong entity."
-        },
-        "title": {
-          "type": "string",
-          "description": "The title of the praise song."
-        },
-        "artist": {
-          "type": "string",
-          "description": "The original artist or composer of the song."
-        },
-        "lyrics": {
-          "type": "string",
-          "description": "The full lyrics of the song."
-        },
-        "notes": {
-          "type": "string",
-          "description": "Internal notes about the song."
-        }
-      },
-      "required": [
-        "id",
-        "title",
-        "artist",
-        "lyrics"
-      ]
+      "required": ["id", "date", "description"]
     },
     "ImportantDate": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "ImportantDate",
       "type": "object",
-      "description": "Records important events or dates for the church community.",
+      "description": "Community events.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the ImportantDate entity."
-        },
-        "title": {
-          "type": "string",
-          "description": "The title of the important event or date."
-        },
-        "description": {
-          "type": "string",
-          "description": "A detailed description of the event."
-        },
-        "date": {
-          "type": "string",
-          "description": "The specific date and time of the event.",
-          "format": "date-time"
-        },
-        "location": {
-          "type": "string",
-          "description": "The physical location where the event will take place."
-        }
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "location": { "type": "string" }
       },
-      "required": [
-        "id",
-        "title",
-        "description",
-        "date"
-      ]
+      "required": ["id", "title", "description", "date"]
     },
     "Feedback": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Feedback",
       "type": "object",
-      "description": "Stores feedback submitted by church members.",
+      "description": "User feedback.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Feedback entity."
-        },
-        "type": {
-          "type": "string",
-          "description": "The type of feedback ('complaint', 'idea', 'compliment')."
-        },
-        "message": {
-          "type": "string",
-          "description": "The detailed message content of the feedback."
-        },
-        "submittedByUserId": {
-          "type": "string",
-          "description": "Reference to the AppUser who submitted the feedback."
-        },
-        "submissionDateTime": {
-          "type": "string",
-          "description": "The date and time when the feedback was submitted.",
-          "format": "date-time"
-        }
+        "id": { "type": "string" },
+        "type": { "type": "string" },
+        "message": { "type": "string" },
+        "submittedByUserId": { "type": "string" },
+        "submissionDateTime": { "type": "string", "format": "date-time" }
       },
-      "required": [
-        "id",
-        "type",
-        "message",
-        "submittedByUserId",
-        "submissionDateTime"
-      ]
+      "required": ["id", "type", "message", "submittedByUserId", "submissionDateTime"]
     }
   },
   "auth": {
-    "providers": [
-      "password"
-    ]
+    "providers": ["password"]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/app_users/{appUserId}",
-        "definition": {
-          "entityName": "AppUser",
-          "schema": {
-            "$ref": "#/backend/entities/AppUser"
-          },
-          "description": "Stores individual user profiles including their role and status.",
-          "params": [
-            {
-              "name": "appUserId",
-              "description": "Matching Firebase Authentication UID."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/worship_services/{worshipServiceId}",
-        "definition": {
-          "entityName": "WorshipService",
-          "schema": {
-            "$ref": "#/backend/entities/WorshipService"
-          },
-          "description": "Worship services details.",
-          "params": [
-            {
-              "name": "worshipServiceId",
-              "description": "Unique identifier."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/praise_songs/{praiseSongId}",
-        "definition": {
-          "entityName": "PraiseSong",
-          "schema": {
-            "$ref": "#/backend/entities/PraiseSong"
-          },
-          "description": "List of praise songs.",
-          "params": [
-            {
-              "name": "praiseSongId",
-              "description": "Unique identifier."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/duty_roles/{dutyRoleId}",
-        "definition": {
-          "entityName": "DutyRole",
-          "schema": {
-            "$ref": "#/backend/entities/DutyRole"
-          },
-          "description": "Available duty roles.",
-          "params": [
-            {
-              "name": "dutyRoleId",
-              "description": "Unique identifier."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/duty_rosters/{dutyRosterId}",
-        "definition": {
-          "entityName": "DutyRoster",
-          "schema": {
-            "$ref": "#/backend/entities/DutyRoster"
-          },
-          "description": "Schedules of duties.",
-          "params": [
-            {
-              "name": "dutyRosterId",
-              "description": "Unique identifier."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/duty_rosters/{dutyRosterId}/duty_assignments/{dutyAssignmentId}",
-        "definition": {
-          "entityName": "DutyAssignment",
-          "schema": {
-            "$ref": "#/backend/entities/DutyAssignment"
-          },
-          "description": "Individual duty assignments.",
-          "params": [
-            {
-              "name": "dutyRosterId",
-              "description": "Parent DutyRoster ID."
-            },
-            {
-              "name": "dutyAssignmentId",
-              "description": "Assignment ID."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/important_dates/{importantDateId}",
-        "definition": {
-          "entityName": "ImportantDate",
-          "schema": {
-            "$ref": "#/backend/entities/ImportantDate"
-          },
-          "description": "Community events.",
-          "params": [
-            {
-              "name": "importantDateId",
-              "description": "Unique identifier."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/feedback/{feedbackId}",
-        "definition": {
-          "entityName": "Feedback",
-          "schema": {
-            "$ref": "#/backend/entities/Feedback"
-          },
-          "description": "User feedback.",
-          "params": [
-            {
-              "name": "feedbackId",
-              "description": "Unique identifier."
-            }
-          ]
-        }
-      }
-    ]
+    "/app_users/{appUserId}": {
+      "schema": "#/backend/entities/AppUser",
+      "description": "User profiles and roles."
+    },
+    "/praise_songs/{praiseSongId}": {
+      "schema": "#/backend/entities/PraiseSong",
+      "description": "Song bank."
+    },
+    "/duty_rosters/{dutyRosterId}": {
+      "schema": "#/backend/entities/DutyRoster",
+      "description": "Service schedules."
+    },
+    "/important_dates/{importantDateId}": {
+      "schema": "#/backend/entities/ImportantDate",
+      "description": "Calendar events."
+    },
+    "/feedback/{feedbackId}": {
+      "schema": "#/backend/entities/Feedback",
+      "description": "Team messages."
+    }
   }
 }

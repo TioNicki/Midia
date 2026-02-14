@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { UserCheck, Shield, ShieldAlert, Loader2, Trash2, Mail, Crown } from "lucide-react"
+import { UserCheck, Shield, ShieldAlert, Loader2, Trash2, Mail, Crown, AlertCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 
@@ -43,12 +43,13 @@ export default function UsuariosPage() {
       return
     }
     if (userId === currentUser?.uid) {
-      toast({ variant: "destructive", title: "Ação negada", description: "Você não pode remover seu próprio poder." })
+      toast({ variant: "destructive", title: "Ação negada", description: "Você não pode alterar seu próprio poder por aqui para evitar erros." })
       return
     }
 
     const userRef = doc(firestore, 'app_users', userId)
     let newRole = 'member'
+    // Ciclo: Member -> Admin -> Moderator -> Member
     if (currentRole === 'member') newRole = 'admin'
     else if (currentRole === 'admin') newRole = 'moderator'
     else if (currentRole === 'moderator') newRole = 'member'
@@ -72,27 +73,37 @@ export default function UsuariosPage() {
   }
 
   if (!isAdminOrHigher && profile) {
-    return <div className="p-8 text-center text-muted-foreground">Acesso negado. Apenas administradores ou moderadores podem ver esta página.</div>
+    return (
+      <div className="flex flex-col items-center justify-center p-20 text-center space-y-4">
+        <AlertCircle className="h-12 w-12 text-destructive" />
+        <h3 className="text-xl font-bold">Acesso Negado</h3>
+        <p className="text-muted-foreground">Apenas administradores ou moderadores podem ver esta página.</p>
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-3xl font-headline font-bold text-primary">Gestão de Usuários</h2>
-          <p className="text-muted-foreground">Controle quem tem acesso ao sistema e suas permissões.</p>
+          <p className="text-muted-foreground">Controle quem tem acesso ao sistema e suas permissões (Baseado no Cloud Firestore).</p>
         </div>
-        {!isModerator && (
-          <Badge variant="outline" className="text-amber-600 border-amber-600 bg-amber-50">
-            Modo Visualização (Somente Moderador altera cargos)
+        {isModerator ? (
+          <Badge className="bg-amber-100 text-amber-700 border-amber-200 px-3 py-1">
+            <Crown className="mr-2 h-3 w-3" /> Modo Moderador Ativo
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="text-muted-foreground italic">
+            Visualização de Administrador
           </Badge>
         )}
       </div>
 
-      <Card>
+      <Card className="border-none shadow-md">
         <CardHeader>
           <CardTitle>Equipe FaithFlow</CardTitle>
-          <CardDescription>Lista completa de voluntários, administradores e moderadores.</CardDescription>
+          <CardDescription>Gerenciamento centralizado de voluntários e liderança.</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -127,7 +138,7 @@ export default function UsuariosPage() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {u.role === 'moderator' && <Crown className="h-3 w-3 text-amber-500" />}
-                        <Badge variant={u.role === 'moderator' ? "default" : u.role === 'admin' ? "secondary" : "outline"}>
+                        <Badge variant={u.role === 'moderator' ? "default" : u.role === 'admin' ? "secondary" : "outline"} className="capitalize">
                           {u.role === 'moderator' ? 'Moderador' : u.role === 'admin' ? 'Administrador' : 'Membro'}
                         </Badge>
                       </div>
@@ -145,7 +156,7 @@ export default function UsuariosPage() {
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                className="text-green-600 h-8 w-8" 
+                                className="text-green-600 h-8 w-8 hover:bg-green-50" 
                                 onClick={() => handleApprove(u.id)}
                                 title="Aprovar Usuário"
                               >
@@ -164,7 +175,7 @@ export default function UsuariosPage() {
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              className="text-destructive h-8 w-8" 
+                              className="text-destructive h-8 w-8 hover:bg-red-50" 
                               onClick={() => handleDelete(u.id)}
                               title="Remover Usuário"
                             >
@@ -173,7 +184,7 @@ export default function UsuariosPage() {
                           </>
                         )}
                         {!isModerator && u.id !== currentUser?.uid && (
-                          <span className="text-xs text-muted-foreground italic">Restrito</span>
+                          <span className="text-xs text-muted-foreground italic">Somente Leitura</span>
                         )}
                       </div>
                     </TableCell>

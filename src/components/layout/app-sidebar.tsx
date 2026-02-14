@@ -10,7 +10,8 @@ import {
   LayoutDashboard, 
   LogOut,
   User,
-  ShieldCheck
+  ShieldCheck,
+  Users
 } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
@@ -29,7 +30,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
-const menuItems = [
+const baseMenuItems = [
   { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
   { title: "Escalas", icon: CalendarDays, path: "/dashboard/escalas" },
   { title: "Louvores", icon: Music, path: "/dashboard/louvores" },
@@ -55,6 +56,10 @@ export function AppSidebar() {
     await signOut(auth)
     router.push("/login")
   }
+
+  const menuItems = isAdmin 
+    ? [...baseMenuItems, { title: "Usuários", icon: Users, path: "/dashboard/usuarios" }]
+    : baseMenuItems
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">

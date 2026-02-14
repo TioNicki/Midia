@@ -12,7 +12,8 @@ import {
   User,
   ShieldCheck,
   Users,
-  Crown
+  Crown,
+  Briefcase
 } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
@@ -59,9 +60,15 @@ export function AppSidebar() {
     router.push("/login")
   }
 
-  const menuItems = isAdminOrHigher 
-    ? [...baseMenuItems, { title: "Usuários", icon: Users, path: "/dashboard/usuarios" }]
-    : baseMenuItems
+  const menuItems = [...baseMenuItems]
+  
+  if (isAdminOrHigher) {
+    menuItems.push({ title: "Usuários", icon: Users, path: "/dashboard/usuarios" })
+  }
+  
+  if (isModerator) {
+    menuItems.push({ title: "Funções", icon: Briefcase, path: "/dashboard/funcoes" })
+  }
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">

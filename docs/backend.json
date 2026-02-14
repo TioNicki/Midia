@@ -71,15 +71,39 @@
       },
       "required": ["id", "title", "artist", "lyrics"]
     },
+    "DutyRole": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DutyRole",
+      "type": "object",
+      "description": "Defines functions within the media group (e.g., Camera, Switcher).",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["id", "name"]
+    },
     "DutyRoster": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "DutyRoster",
       "type": "object",
-      "description": "Schedule of duties.",
+      "description": "Schedule of duties with user assignments.",
       "properties": {
         "id": { "type": "string" },
         "date": { "type": "string", "format": "date" },
-        "description": { "type": "string" }
+        "description": { "type": "string" },
+        "assignments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "userId": { "type": "string" },
+              "userName": { "type": "string" },
+              "roleId": { "type": "string" },
+              "roleName": { "type": "string" }
+            }
+          }
+        }
       },
       "required": ["id", "date", "description"]
     },
@@ -123,6 +147,10 @@
     "/praise_songs/{praiseSongId}": {
       "schema": "#/backend/entities/PraiseSong",
       "description": "Song bank."
+    },
+    "/duty_roles/{roleId}": {
+      "schema": "#/backend/entities/DutyRole",
+      "description": "Available media functions."
     },
     "/duty_rosters/{dutyRosterId}": {
       "schema": "#/backend/entities/DutyRoster",

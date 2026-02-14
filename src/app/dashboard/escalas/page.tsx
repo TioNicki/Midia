@@ -8,8 +8,9 @@ import { addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/no
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { CalendarDays, Plus, Trash2, Loader2, UserPlus, X } from "lucide-react"
+import { CalendarDays, Plus, Trash2, Loader2, UserPlus, X, Calendar as CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
 import {
   Dialog,
   DialogContent,
@@ -40,6 +41,9 @@ import {
 } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { cn } from "@/lib/utils"
 
 interface Assignment {
   userId: string;
@@ -57,6 +61,7 @@ export default function EscalasPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [idToDelete, setIdToDelete] = useState<string | null>(null)
   const [newRoster, setNewRoster] = useState({ date: "", description: "" })
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [currentAssignment, setCurrentAssignment] = useState({ userId: "", roleId: "" })
 
@@ -106,16 +111,22 @@ export default function EscalasPage() {
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newRoster.date || !newRoster.description) return
+    if (!selectedDate || !newRoster.description) {
+      toast({ variant: "destructive", title: "Erro", description: "Preencha a data e o título." })
+      return
+    }
 
+    const dateStr = format(selectedDate, 'yyyy-MM-dd')
     const colRef = collection(firestore, 'duty_rosters')
     addDocumentNonBlocking(colRef, { 
-      ...newRoster, 
+      date: dateStr,
+      description: newRoster.description,
       assignments,
       createdAt: new Date().toISOString()
     })
     
     setNewRoster({ date: "", description: "" })
+    setSelectedDate(undefined)
     setAssignments([])
     setIsCreateOpen(false)
     toast({ title: "Escala criada", description: "A nova escala foi adicionada com sucesso." })
@@ -153,15 +164,31 @@ export default function EscalasPage() {
               </DialogHeader>
               <form onSubmit={handleCreate} className="space-y-6 py-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                  <div className="space-y-2 flex flex-col">
                     <Label htmlFor="date">Data do Culto</Label>
-                    <Input 
-                      id="date" 
-                      type="date" 
-                      value={newRoster.date} 
-                      onChange={(e) => setNewRoster({...newRoster, date: e.target.value})}
-                      required 
-                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full justify-start text-left font-normal h-10 bg-white",
+                            !selectedDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {selectedDate ? format(selectedDate, "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={setSelectedDate}
+                          initialFocus
+                          locale={ptBR}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="desc">Título/Culto</Label>
@@ -186,7 +213,7 @@ export default function EscalasPage() {
                         value={currentAssignment.userId} 
                         onValueChange={(v) => setCurrentAssignment({...currentAssignment, userId: v})}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-white">
                           <SelectValue placeholder="Selecione o membro" />
                         </SelectTrigger>
                         <SelectContent>
@@ -203,7 +230,7 @@ export default function EscalasPage() {
                           value={currentAssignment.roleId} 
                           onValueChange={(v) => setCurrentAssignment({...currentAssignment, roleId: v})}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger className="bg-white">
                             <SelectValue placeholder="Selecione a função" />
                           </SelectTrigger>
                           <SelectContent>
@@ -221,7 +248,7 @@ export default function EscalasPage() {
 
                   <div className="space-y-2 mt-4">
                     {assignments.map((as, idx) => (
-                      <div key={idx} className="flex items-center justify-between bg-white p-2 rounded border text-sm">
+                      <div key={idx} className="flex items-center justify-between bg-white p-2 rounded border text-sm animate-in fade-in slide-in-from-right-1">
                         <div className="flex items-center gap-2">
                           <span className="font-bold">{as.userName}</span>
                           <span className="text-muted-foreground">→</span>
@@ -245,7 +272,7 @@ export default function EscalasPage() {
                 </div>
 
                 <DialogFooter>
-                  <Button type="submit" className="w-full">Publicar Escala</Button>
+                  <Button type="submit" className="w-full font-bold">Publicar Escala</Button>
                 </DialogFooter>
               </form>
             </DialogContent>

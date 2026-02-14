@@ -68,36 +68,48 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      // Cria o usuário no Auth
+      // 1. Cria o usuário no Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       const uid = userCredential.user.uid
 
+      // 2. Atualiza o perfil no Auth
       await updateProfile(userCredential.user, { displayName: name })
 
-      // CRIA O PERFIL COMO MODERADOR PARA VOCÊ RECUPERAR O ACESSO
-      // Após criar sua conta, podemos mudar isso para 'member' e 'pending'
+      // 3. Cria o perfil no Firestore como MODERADOR para recuperação
+      // IMPORTANTE: Como as regras de segurança agora impedem auto-edição de cargo,
+      // esta criação inicial via setDoc funcionará se o documento ainda não existir.
       const userRef = doc(firestore, 'app_users', uid)
       await setDoc(userRef, {
         id: uid,
         externalAuthId: uid,
         name: name,
         email: email,
-        role: 'moderator', // Temporariamente como moderator para recuperação
+        role: 'moderator',
         status: 'approved'
       })
 
       toast({
-        title: "Conta criada com sucesso!",
-        description: "Você é um Moderador e pode gerenciar todos os usuários.",
+        title: "Conta de Moderador criada!",
+        description: "Você agora tem acesso total para gerenciar a equipe.",
       })
       
       router.push("/dashboard")
     } catch (error: any) {
       console.error("Erro no cadastro:", error)
+      
+      let message = "Ocorreu um erro inesperado."
+      if (error.code === 'auth/email-already-in-use') {
+        message = "Este e-mail já está em uso. Use um e-mail diferente para sua conta de recuperação."
+      } else if (error.code === 'auth/invalid-email') {
+        message = "E-mail inválido."
+      } else if (error.code === 'auth/weak-password') {
+        message = "A senha é muito fraca."
+      }
+
       toast({
         variant: "destructive",
         title: "Erro ao criar conta",
-        description: error.message || "Ocorreu um erro inesperado.",
+        description: message,
       })
       setLoading(false)
     }
@@ -200,7 +212,7 @@ export default function LoginPage() {
                   />
                 </div>
                 <Button className="w-full h-11 text-lg font-bold" type="submit" disabled={loading}>
-                  {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <><UserPlus className="mr-2 h-5 w-5" /> Criar Conta Admin/Mod</>}
+                  {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <><UserPlus className="mr-2 h-5 w-5" /> Criar Conta de Moderador</>}
                 </Button>
               </form>
             </TabsContent>

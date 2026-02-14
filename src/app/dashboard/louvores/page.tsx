@@ -158,7 +158,7 @@ export default function LouvoresPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filteredSongs.map((song) => (
-            <Card key={song.id} className="group hover:border-primary transition-colors cursor-pointer overflow-hidden">
+            <Card key={song.id} className="group hover:border-primary transition-colors cursor-pointer overflow-hidden relative">
               <CardHeader className="p-4 pb-0 flex flex-row items-start justify-between">
                 <div className="space-y-1">
                   <CardTitle className="text-lg text-primary">{song.title}</CardTitle>
@@ -173,8 +173,8 @@ export default function LouvoresPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem 
-                        className="text-destructive"
-                        onClick={() => handleDelete(song.id)}
+                        className="text-destructive focus:text-destructive"
+                        onSelect={() => handleDelete(song.id)}
                       >
                         <Trash2 className="mr-2 h-4 w-4" /> Excluir
                       </DropdownMenuItem>

@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -56,7 +55,6 @@ export default function EscalasPage() {
   const { data: profile } = useDoc(userProfileRef)
   const isAdminOrHigher = profile?.role === 'admin' || profile?.role === 'moderator'
 
-  // Dados para os selects
   const rolesRef = useMemoFirebase(() => collection(firestore, 'duty_roles'), [firestore])
   const { data: roles } = useCollection(rolesRef)
 
@@ -115,6 +113,8 @@ export default function EscalasPage() {
       toast({ title: "Escala removida" })
     }
   }
+
+  const sortedRosters = rosters ? [...rosters].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()) : []
 
   return (
     <div className="space-y-6">
@@ -258,7 +258,7 @@ export default function EscalasPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rosters?.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((escala) => (
+                {sortedRosters.map((escala) => (
                   <TableRow key={escala.id}>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
@@ -293,7 +293,7 @@ export default function EscalasPage() {
                     )}
                   </TableRow>
                 ))}
-                {!isLoading && rosters?.length === 0 && (
+                {!isLoading && sortedRosters.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={isAdminOrHigher ? 4 : 3} className="text-center py-8 text-muted-foreground">
                       Nenhuma escala encontrada.

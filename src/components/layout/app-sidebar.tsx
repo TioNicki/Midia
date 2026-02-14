@@ -16,7 +16,8 @@ import {
   Briefcase,
   Sun,
   Moon,
-  Sparkles
+  Sparkles,
+  Circle
 } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
@@ -100,8 +101,11 @@ export function AppSidebar() {
                 <Music className="size-4" />
               </div>
               <div className="flex flex-col gap-0.5 leading-none">
-                <span className="font-semibold">Atos Multimídia</span>
-                <span className="text-xs opacity-70">Church Media</span>
+                <span className="font-semibold text-sidebar-foreground">Atos Multimídia</span>
+                <div className="flex items-center gap-1.5">
+                  <Circle className="h-1.5 w-1.5 fill-green-500 text-green-500 animate-pulse" />
+                  <span className="text-[10px] opacity-70">Sistema Online 24h</span>
+                </div>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>

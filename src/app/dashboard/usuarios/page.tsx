@@ -49,7 +49,6 @@ export default function UsuariosPage() {
 
     const userRef = doc(firestore, 'app_users', userId)
     let newRole = 'member'
-    // Ciclo: Member -> Admin -> Moderator -> Member
     if (currentRole === 'member') newRole = 'admin'
     else if (currentRole === 'admin') newRole = 'moderator'
     else if (currentRole === 'moderator') newRole = 'member'
@@ -59,16 +58,19 @@ export default function UsuariosPage() {
   }
 
   const handleDelete = (userId: string) => {
-    if (!isModerator) return
+    if (!isModerator) {
+      toast({ variant: "destructive", title: "Ação negada", description: "Apenas moderadores podem remover usuários." })
+      return
+    }
     if (userId === currentUser?.uid) {
       toast({ variant: "destructive", title: "Ação negada", description: "Você não pode remover a si mesmo." })
       return
     }
     
-    if (confirm("Tem certeza que deseja remover este usuário permanentemente?")) {
+    if (window.confirm("Tem certeza que deseja remover este usuário permanentemente do sistema?")) {
       const userRef = doc(firestore, 'app_users', userId)
       deleteDocumentNonBlocking(userRef)
-      toast({ title: "Usuário removido", description: "O perfil foi excluído do banco de dados." })
+      toast({ title: "Usuário removido", variant: "destructive" })
     }
   }
 
@@ -87,7 +89,7 @@ export default function UsuariosPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-3xl font-headline font-bold text-primary">Gestão de Usuários</h2>
-          <p className="text-muted-foreground">Controle quem tem acesso ao sistema e suas permissões (Baseado no Cloud Firestore).</p>
+          <p className="text-muted-foreground">Controle quem tem acesso ao sistema e suas permissões.</p>
         </div>
         {isModerator ? (
           <Badge className="bg-amber-100 text-amber-700 border-amber-200 px-3 py-1">
@@ -154,6 +156,7 @@ export default function UsuariosPage() {
                           <>
                             {u.status === 'pending' && (
                               <Button 
+                                type="button"
                                 variant="ghost" 
                                 size="icon" 
                                 className="text-green-600 h-8 w-8 hover:bg-green-50" 
@@ -164,15 +167,17 @@ export default function UsuariosPage() {
                               </Button>
                             )}
                             <Button 
+                              type="button"
                               variant="ghost" 
                               size="icon" 
                               className="text-primary h-8 w-8" 
                               onClick={() => handleToggleRole(u.id, u.role)}
-                              title="Ciclar Função (Membro -> Admin -> Moderador)"
+                              title="Ciclar Função"
                             >
                               {u.role === 'moderator' ? <Crown className="h-4 w-4" /> : u.role === 'admin' ? <ShieldAlert className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
                             </Button>
                             <Button 
+                              type="button"
                               variant="ghost" 
                               size="icon" 
                               className="text-destructive h-8 w-8 hover:bg-red-50" 

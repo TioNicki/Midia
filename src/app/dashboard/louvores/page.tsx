@@ -63,11 +63,12 @@ export default function LouvoresPage() {
     toast({ title: "Louvor adicionado", description: "A música foi cadastrada no banco de dados." })
   }
 
-  const handleDelete = (id: string) => {
-    if (confirm("Deseja remover este louvor permanentemente?")) {
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
+    if (window.confirm("Deseja remover este louvor permanentemente?")) {
       const docRef = doc(firestore, 'praise_songs', id)
       deleteDocumentNonBlocking(docRef)
-      toast({ title: "Louvor removido" })
+      toast({ title: "Louvor removido", variant: "destructive" })
     }
   }
 
@@ -158,7 +159,7 @@ export default function LouvoresPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filteredSongs.map((song) => (
-            <Card key={song.id} className="group hover:border-primary transition-colors cursor-pointer overflow-hidden relative">
+            <Card key={song.id} className="group hover:border-primary transition-colors overflow-hidden relative">
               <CardHeader className="p-4 pb-0 flex flex-row items-start justify-between">
                 <div className="space-y-1">
                   <CardTitle className="text-lg text-primary">{song.title}</CardTitle>
@@ -173,10 +174,10 @@ export default function LouvoresPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem 
-                        className="text-destructive focus:text-destructive"
-                        onSelect={() => handleDelete(song.id)}
+                        className="text-destructive focus:text-destructive cursor-pointer"
+                        onClick={(e) => handleDelete(e, song.id)}
                       >
-                        <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                        <Trash2 className="mr-2 h-4 w-4" /> Excluir permanentemente
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

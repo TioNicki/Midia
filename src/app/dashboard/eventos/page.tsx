@@ -46,7 +46,6 @@ export default function EventosPage() {
     if (!newEvent.title || !newEvent.date) return
 
     const colRef = collection(firestore, 'important_dates')
-    // Converte para ISO com timezone
     const dateFormatted = new Date(newEvent.date).toISOString()
     addDocumentNonBlocking(colRef, { ...newEvent, date: dateFormatted })
     
@@ -56,10 +55,10 @@ export default function EventosPage() {
   }
 
   const handleDelete = (id: string) => {
-    if (confirm("Deseja excluir este evento?")) {
+    if (window.confirm("Deseja excluir este evento permanentemente?")) {
       const docRef = doc(firestore, 'important_dates', id)
       deleteDocumentNonBlocking(docRef)
-      toast({ title: "Evento removido" })
+      toast({ title: "Evento removido", variant: "destructive" })
     }
   }
 
@@ -153,12 +152,13 @@ export default function EventosPage() {
                       <Bell className="h-4 w-4 text-amber-500" />
                       {isAdminOrHigher && (
                         <Button 
+                          type="button"
                           variant="ghost" 
                           size="icon" 
-                          className="h-6 w-6 text-destructive"
+                          className="h-8 w-8 text-destructive hover:bg-red-50"
                           onClick={() => handleDelete(evento.id)}
                         >
-                          <Trash2 className="h-3 w-3" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       )}
                     </div>

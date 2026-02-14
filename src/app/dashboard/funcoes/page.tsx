@@ -53,10 +53,10 @@ export default function FuncoesPage() {
   }
 
   const handleDelete = (id: string) => {
-    if (confirm("Deseja realmente excluir esta função?")) {
+    if (window.confirm("Deseja realmente excluir esta função? Isso pode afetar escalas futuras.")) {
       const docRef = doc(firestore, 'duty_roles', id)
       deleteDocumentNonBlocking(docRef)
-      toast({ title: "Função removida" })
+      toast({ title: "Função removida", variant: "destructive" })
     }
   }
 
@@ -147,6 +147,7 @@ export default function FuncoesPage() {
                     <TableCell className="hidden md:table-cell">{role.description || "Sem descrição"}</TableCell>
                     <TableCell className="text-right">
                       <Button 
+                        type="button"
                         variant="ghost" 
                         size="icon" 
                         className="h-8 w-8 text-destructive"

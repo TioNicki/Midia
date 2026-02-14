@@ -190,7 +190,7 @@ export default function EscalasPage() {
                         value={currentAssignment.userId} 
                         onValueChange={(v) => setCurrentAssignment({...currentAssignment, userId: v})}
                       >
-                        <SelectTrigger className="bg-white">
+                        <SelectTrigger className="bg-background">
                           <SelectValue placeholder="Selecione o membro" />
                         </SelectTrigger>
                         <SelectContent>
@@ -207,7 +207,7 @@ export default function EscalasPage() {
                           value={currentAssignment.roleId} 
                           onValueChange={(v) => setCurrentAssignment({...currentAssignment, roleId: v})}
                         >
-                          <SelectTrigger className="bg-white">
+                          <SelectTrigger className="bg-background">
                             <SelectValue placeholder="Selecione a função" />
                           </SelectTrigger>
                           <SelectContent>
@@ -225,7 +225,7 @@ export default function EscalasPage() {
 
                   <div className="space-y-2 mt-4">
                     {assignments.map((as, idx) => (
-                      <div key={idx} className="flex items-center justify-between bg-white p-2 rounded border text-sm animate-in fade-in slide-in-from-right-1">
+                      <div key={idx} className="flex items-center justify-between bg-background p-2 rounded border text-sm animate-in fade-in slide-in-from-right-1">
                         <div className="flex items-center gap-2">
                           <span className="font-bold">{as.userName}</span>
                           <span className="text-muted-foreground">→</span>

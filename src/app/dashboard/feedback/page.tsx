@@ -180,7 +180,7 @@ export default function FeedbackPage() {
               </Card>
             ))}
             {!isLoadingFeedbacks && (!feedbacks || feedbacks.length === 0) && (
-              <div className="text-center p-12 text-muted-foreground bg-white rounded-lg border">
+              <div className="text-center p-12 text-muted-foreground bg-background rounded-lg border">
                 Nenhum feedback recebido até o momento.
               </div>
             )}
@@ -265,7 +265,7 @@ export default function FeedbackPage() {
               <Textarea 
                 id="message" 
                 placeholder="Descreva detalhadamente sua sugestão ou comentário..." 
-                className="min-h-[150px] bg-white"
+                className="min-h-[150px] bg-background"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 required

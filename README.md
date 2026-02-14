@@ -17,22 +17,22 @@ Este projeto **não utiliza Cloud SQL**. Todos os dados estão armazenados no ec
 1.  **Usuários e Senhas**: Gerenciados pelo *Firebase Authentication*.
 2.  **Dados da Aplicação**: (Escalas, Louvores, Eventos, Funções) Estão no *Cloud Firestore*.
 
-## 💰 Limites do Plano Gratuito (Firebase Spark)
+## 💰 Viabilidade e Limites (Plano Spark)
 
-Este projeto foi desenhado para operar dentro do plano gratuito do Firebase. Abaixo estão os limites principais:
+Este projeto foi desenhado para operar permanentemente dentro do plano gratuito do Firebase. Para uma equipe de **7 usuários**, o consumo é praticamente irrelevante frente aos limites:
 
-- **Authentication**: Até 50.000 usuários ativos mensais.
+- **Authentication**: 50.000 usuários/mês (Uso atual: 0.01%).
 - **Firestore (Banco de Dados)**:
-  - Armazenamento: 1 GB (milhares de escalas e músicas).
-  - Leituras: 50.000 por dia.
-  - Escritas/Deleções: 20.000 por dia.
-- **Hospedagem**: Se usar Firebase Hosting, o limite é de 10 GB de armazenamento e 360 MB de transferência diária.
+  - Leituras: 50.000/dia.
+  - Escritas: 20.000/dia.
+  - Armazenamento: 1 GB (Suficiente para anos de histórico de escalas e letras).
+- **IA (Genkit/Gemini)**: Limites de cota gratuita para geração de conteúdo criativo.
 
-*Nota: Para um grupo de mídia de igreja, esses limites são mais do que suficientes para operar sem custos.*
+*Nota: O sistema é "zero custo" para a igreja na escala atual e suporta crescimento sem necessidade de upgrade imediato.*
 
 ## 🚀 Portabilidade
 
-Este projeto é totalmente portátil. Como o banco de dados e a autenticação são serviços de nuvem, você pode hospedar em qualquer plataforma (Netlify, Vercel, Firebase App Hosting).
+O projeto é totalmente independente. O banco de dados e a autenticação são serviços de nuvem, permitindo hospedagem em plataformas como Vercel, Firebase App Hosting ou Netlify sem perda de dados.
 
 ---
 

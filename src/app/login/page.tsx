@@ -1,25 +1,67 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useAuth } from "@/lib/auth-store"
+import { useAuth, useUser, useFirestore } from "@/firebase"
+import { signInWithEmailAndPassword } from "firebase/auth"
+import { doc, getDoc, setDoc } from "firebase/firestore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Church } from "lucide-react"
+import { Church, Loader2 } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const { login } = useAuth()
+  const [loading, setLoading] = useState(false)
+  
+  const { auth } = useAuth()
+  const { firestore } = useFirestore()
+  const { user } = useUser()
   const router = useRouter()
+  const { toast } = useToast()
 
-  const handleLogin = (e: React.FormEvent, role: "admin" | "member") => {
+  useEffect(() => {
+    if (user) {
+      router.push("/dashboard")
+    }
+  }, [user, router])
+
+  const handleLogin = async (e: React.FormEvent, role?: "admin" | "member") => {
     e.preventDefault()
-    login(role)
-    router.push("/dashboard")
+    setLoading(true)
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      const uid = userCredential.user.uid
+
+      // Check if user exists in Firestore, if not create with role
+      const userRef = doc(firestore, 'app_users', uid)
+      const userDoc = await getDoc(userRef)
+
+      if (!userDoc.exists()) {
+        await setDoc(userRef, {
+          id: uid,
+          externalAuthId: uid,
+          name: userCredential.user.displayName || email.split('@')[0],
+          email: email,
+          role: role || 'member'
+        })
+      }
+
+      router.push("/dashboard")
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao entrar",
+        description: "Verifique suas credenciais. " + error.message,
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -57,11 +99,20 @@ export default function LoginPage() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-3">
-          <Button className="w-full h-11 text-lg font-bold" onClick={(e) => handleLogin(e, "admin")}>
-            Entrar como Admin
+          <Button 
+            className="w-full h-11 text-lg font-bold" 
+            onClick={(e) => handleLogin(e, "admin")}
+            disabled={loading}
+          >
+            {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Entrar como Admin"}
           </Button>
-          <Button variant="outline" className="w-full h-11 text-lg" onClick={(e) => handleLogin(e, "member")}>
-            Entrar como Membro
+          <Button 
+            variant="outline" 
+            className="w-full h-11 text-lg" 
+            onClick={(e) => handleLogin(e, "member")}
+            disabled={loading}
+          >
+            {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Entrar como Membro"}
           </Button>
           <p className="text-xs text-center text-muted-foreground mt-2">
             FaithFlow &copy; {new Date().getFullYear()} - Grupo de Mídia

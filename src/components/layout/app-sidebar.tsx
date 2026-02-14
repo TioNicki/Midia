@@ -13,7 +13,9 @@ import {
   ShieldCheck
 } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
-import { useAuth } from "@/lib/auth-store"
+import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
+import { signOut } from "firebase/auth"
+import { doc } from "firebase/firestore"
 
 import {
   Sidebar,
@@ -38,11 +40,19 @@ const menuItems = [
 export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const { user, logout } = useAuth()
-  const { toggleSidebar } = useSidebar()
+  const { auth } = useAuth()
+  const { user } = useUser()
+  const { firestore } = useFirestore()
 
-  const handleLogout = () => {
-    logout()
+  const userProfileRef = useMemoFirebase(() => 
+    user ? doc(firestore, 'app_users', user.uid) : null, 
+    [firestore, user]
+  )
+  const { data: profile } = useDoc(userProfileRef)
+  const isAdmin = profile?.role === 'admin'
+
+  const handleLogout = async () => {
+    await signOut(auth)
     router.push("/login")
   }
 
@@ -89,11 +99,11 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <div className="flex items-center gap-3 px-2 py-2 mb-4 overflow-hidden group-data-[collapsible=icon]:hidden">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sidebar-accent/20">
-                {user?.role === 'admin' ? <ShieldCheck className="h-5 w-5 text-accent" /> : <User className="h-5 w-5 text-white" />}
+                {isAdmin ? <ShieldCheck className="h-5 w-5 text-accent" /> : <User className="h-5 w-5 text-white" />}
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="text-sm font-medium truncate">{user?.name || "Visitante"}</span>
-                <span className="text-xs opacity-70 truncate">{user?.role === 'admin' ? "Administrador" : "Membro"}</span>
+                <span className="text-sm font-medium truncate">{profile?.name || user?.email?.split('@')[0]}</span>
+                <span className="text-xs opacity-70 truncate">{isAdmin ? "Administrador" : "Membro"}</span>
               </div>
             </div>
           </SidebarMenuItem>

@@ -1,29 +1,79 @@
 
 "use client"
 
+import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
+import { collection, doc } from "firebase/firestore"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { useAuth } from "@/lib/auth-store"
-import { CalendarDays, Music, Bell, MessageSquare, Plus } from "lucide-react"
+import { CalendarDays, Music, Bell, MessageSquare, Plus, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { format } from "date-fns"
 
 export default function DashboardOverview() {
-  const { user } = useAuth()
+  const { firestore } = useFirestore()
+  const { user } = useUser()
+
+  const userProfileRef = useMemoFirebase(() => 
+    user ? doc(firestore, 'app_users', user.uid) : null, 
+    [firestore, user]
+  )
+  const { data: profile, isLoading: isProfileLoading } = useDoc(userProfileRef)
+  const isAdmin = profile?.role === 'admin'
+
+  const rostersRef = useMemoFirebase(() => collection(firestore, 'duty_rosters'), [firestore])
+  const { data: rosters } = useCollection(rostersRef)
+
+  const songsRef = useMemoFirebase(() => collection(firestore, 'praise_songs'), [firestore])
+  const { data: songs } = useCollection(songsRef)
+
+  const eventsRef = useMemoFirebase(() => collection(firestore, 'important_dates'), [firestore])
+  const { data: events } = useCollection(eventsRef)
+
+  const feedbacksRef = useMemoFirebase(() => collection(firestore, 'feedback'), [firestore])
+  const { data: feedbacks } = useCollection(feedbacksRef)
 
   const stats = [
-    { title: "Próxima Escala", value: "Domingo, 10:00", icon: CalendarDays, color: "text-primary" },
-    { title: "Louvores Hoje", value: "5 Músicas", icon: Music, color: "text-secondary" },
-    { title: "Eventos Próximos", value: "3 Datas", icon: Bell, color: "text-amber-500" },
-    { title: "Feedback Pendente", value: "2 Novos", icon: MessageSquare, color: "text-teal-500" },
+    { 
+      title: "Próxima Escala", 
+      value: rosters && rosters[0] ? format(new Date(rosters[0].date), 'dd/MM, HH:mm') : "---", 
+      icon: CalendarDays, 
+      color: "text-primary" 
+    },
+    { 
+      title: "Banco de Louvores", 
+      value: `${songs?.length || 0} Músicas`, 
+      icon: Music, 
+      color: "text-secondary" 
+    },
+    { 
+      title: "Eventos Próximos", 
+      value: `${events?.length || 0} Datas`, 
+      icon: Bell, 
+      color: "text-amber-500" 
+    },
+    { 
+      title: "Feedbacks", 
+      value: `${feedbacks?.length || 0} Mensagens`, 
+      icon: MessageSquare, 
+      color: "text-teal-500" 
+    },
   ]
+
+  if (isProfileLoading) {
+    return (
+      <div className="flex h-full items-center justify-center p-20">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-headline font-bold text-primary">Olá, {user?.name}!</h2>
+          <h2 className="text-3xl font-headline font-bold text-primary">Olá, {profile?.name || user?.email?.split('@')[0]}!</h2>
           <p className="text-muted-foreground">Aqui está um resumo do que está acontecendo no grupo de mídia.</p>
         </div>
-        {user?.role === 'admin' && (
+        {isAdmin && (
           <Button className="h-11 shadow-lg font-bold">
             <Plus className="mr-2 h-4 w-4" /> Nova Escala
           </Button>
@@ -48,54 +98,49 @@ export default function DashboardOverview() {
         <Card>
           <CardHeader>
             <CardTitle>Equipe em Serviço - Próximo Culto</CardTitle>
-            <CardDescription>Domingo, 19:00 - Culto de Celebração</CardDescription>
+            <CardDescription>Escala automática baseada no sistema</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[
-                { name: "Carlos Silva", role: "Projeção", avatar: "CS" },
-                { name: "Mariana Oliveira", role: "Streaming", avatar: "MO" },
-                { name: "João Pedro", role: "Som Front", avatar: "JP" },
-                { name: "Ana Luiza", role: "Fotografia", avatar: "AL" },
-              ].map((member) => (
-                <div key={member.name} className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center font-bold text-xs">
-                    {member.avatar}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium leading-none">{member.name}</p>
-                    <p className="text-xs text-muted-foreground">{member.role}</p>
-                  </div>
-                  <div className="h-2 w-2 rounded-full bg-green-500" title="Confirmado" />
+              {rosters && rosters[0] ? (
+                <div className="p-4 bg-muted/30 rounded-lg border border-dashed text-center">
+                  <p className="text-sm font-medium">{rosters[0].description}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Veja os detalhes na aba Escalas.
+                  </p>
                 </div>
-              ))}
+              ) : (
+                <p className="text-sm text-center text-muted-foreground py-8 italic">
+                  Nenhuma equipe escalada para o próximo culto.
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Louvores do Próximo Culto</CardTitle>
-            <CardDescription>Seleção feita pelo Ministério de Louvor</CardDescription>
+            <CardTitle>Louvores Recentes</CardTitle>
+            <CardDescription>Últimas músicas adicionadas ao banco</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[
-                { title: "Tua Presença", artist: "Central 3", duration: "5:20" },
-                { title: "Lugar Secreto", artist: "Gabriela Rocha", duration: "6:45" },
-                { title: "Ousado Amor", artist: "Isaias Saad", duration: "4:30" },
-                { title: "Aclame ao Senhor", artist: "Diante do Trono", duration: "5:10" },
-              ].map((song) => (
-                <div key={song.title} className="flex items-center justify-between border-b pb-2 last:border-0">
+              {songs?.slice(0, 4).map((song) => (
+                <div key={song.id} className="flex items-center justify-between border-b pb-2 last:border-0">
                   <div>
                     <p className="text-sm font-medium">{song.title}</p>
                     <p className="text-xs text-muted-foreground">{song.artist}</p>
                   </div>
-                  <span className="text-xs font-mono bg-muted px-2 py-1 rounded">{song.duration}</span>
+                  <span className="text-xs font-mono bg-muted px-2 py-1 rounded">ID: {song.id.slice(0, 4)}</span>
                 </div>
               ))}
+              {!songs || songs.length === 0 && (
+                <p className="text-sm text-center text-muted-foreground py-8 italic">
+                  Nenhum louvor cadastrado.
+                </p>
+              )}
             </div>
-            {user?.role === 'admin' && (
+            {isAdmin && (
               <Button variant="outline" className="w-full mt-4">Ver Todos os Louvores</Button>
             )}
           </CardContent>

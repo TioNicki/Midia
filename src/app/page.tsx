@@ -3,19 +3,21 @@
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useAuth } from "@/lib/auth-store"
+import { useUser } from "@/firebase"
 
 export default function Home() {
-  const { user } = useAuth()
+  const { user, isUserLoading } = useUser()
   const router = useRouter()
 
   useEffect(() => {
-    if (user) {
-      router.push("/dashboard")
-    } else {
-      router.push("/login")
+    if (!isUserLoading) {
+      if (user) {
+        router.push("/dashboard")
+      } else {
+        router.push("/login")
+      }
     }
-  }, [user, router])
+  }, [user, isUserLoading, router])
 
   return null
 }

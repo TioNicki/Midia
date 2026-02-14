@@ -2,7 +2,9 @@
 "use client"
 
 import { useState } from "react"
-import { useAuth } from "@/lib/auth-store"
+import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
+import { collection, doc, serverTimestamp } from "firebase/firestore"
+import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -18,50 +20,54 @@ import {
   AlertTriangle, 
   User, 
   Calendar,
-  CheckCircle2
+  CheckCircle2,
+  Loader2
 } from "lucide-react"
-
-const MOCK_FEEDBACKS = [
-  { 
-    id: 1, 
-    usuario: "Pedro Santos", 
-    tipo: "elogio", 
-    mensagem: "A equipe de projeção foi excelente no culto de ontem! Sincronia perfeita com o louvor.", 
-    data: "15/04/2024" 
-  },
-  { 
-    id: 2, 
-    usuario: "Ana Paula", 
-    tipo: "ideia", 
-    mensagem: "Poderíamos criar um guia rápido plastificado para quem fica no streaming, com os passos de emergência.", 
-    data: "16/04/2024" 
-  },
-  { 
-    id: 3, 
-    usuario: "Ricardo Lima", 
-    tipo: "reclamacao", 
-    mensagem: "O retorno de áudio do lado esquerdo está falhando intermitentemente. Precisamos revisar os cabos.", 
-    data: "17/04/2024" 
-  },
-]
+import { format } from "date-fns"
 
 export default function FeedbackPage() {
-  const { user } = useAuth()
-  const isAdmin = user?.role === 'admin'
+  const { firestore } = useFirestore()
+  const { user } = useUser()
+  const { toast } = useToast()
+  
   const [loading, setLoading] = useState(false)
   const [type, setType] = useState("elogio")
-  const { toast } = useToast()
+  const [message, setMessage] = useState("")
+
+  const userProfileRef = useMemoFirebase(() => 
+    user ? doc(firestore, 'app_users', user.uid) : null, 
+    [firestore, user]
+  )
+  const { data: profile } = useDoc(userProfileRef)
+  const isAdmin = profile?.role === 'admin'
+
+  const feedbacksRef = useMemoFirebase(() => collection(firestore, 'feedback'), [firestore])
+  const { data: feedbacks, isLoading: isLoadingFeedbacks } = useCollection(feedbacksRef)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!user) return
+
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
-      toast({
-        title: "Feedback enviado!",
-        description: "Agradecemos sua contribuição para o crescimento do grupo.",
+    const feedbackData = {
+      type,
+      message,
+      submittedByUserId: user.uid,
+      submissionDateTime: new Date().toISOString(),
+    }
+
+    addDocumentNonBlocking(feedbacksRef, feedbackData)
+      .then(() => {
+        setLoading(false)
+        setMessage("")
+        toast({
+          title: "Feedback enviado!",
+          description: "Agradecemos sua contribuição para o crescimento do grupo.",
+        })
       })
-    }, 1000)
+      .catch(() => {
+        setLoading(false)
+      })
   }
 
   const getTypeIcon = (type: string) => {
@@ -90,38 +96,49 @@ export default function FeedbackPage() {
           <p className="text-muted-foreground">Analise as sugestões e comentários enviados pela equipe de mídia.</p>
         </div>
 
-        <div className="grid gap-4">
-          {MOCK_FEEDBACKS.map((fb) => (
-            <Card key={fb.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="flex flex-row items-start justify-between pb-2">
-                <div className="flex items-center gap-3">
-                  <div className="bg-primary/10 p-2 rounded-full">
-                    {getTypeIcon(fb.tipo)}
+        {isLoadingFeedbacks ? (
+          <div className="flex justify-center p-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {feedbacks?.map((fb) => (
+              <Card key={fb.id} className="hover:shadow-md transition-shadow">
+                <CardHeader className="flex flex-row items-start justify-between pb-2">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-primary/10 p-2 rounded-full">
+                      {getTypeIcon(fb.type)}
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        {getTypeLabel(fb.type)}
+                        <Badge variant="outline" className="font-normal">
+                          #{fb.id.slice(-4)}
+                        </Badge>
+                      </CardTitle>
+                      <CardDescription className="flex items-center gap-2 mt-1">
+                        <User className="h-3 w-3" /> Membro • <Calendar className="h-3 w-3" /> {fb.submissionDateTime ? format(new Date(fb.submissionDateTime), 'dd/MM/yyyy HH:mm') : '---'}
+                      </CardDescription>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      {getTypeLabel(fb.tipo)}
-                      <Badge variant="outline" className="font-normal">
-                        #{fb.id}
-                      </Badge>
-                    </CardTitle>
-                    <CardDescription className="flex items-center gap-2 mt-1">
-                      <User className="h-3 w-3" /> {fb.usuario} • <Calendar className="h-3 w-3" /> {fb.data}
-                    </CardDescription>
-                  </div>
-                </div>
-                <Button variant="ghost" size="sm" className="text-primary font-bold">
-                  <CheckCircle2 className="mr-2 h-4 w-4" /> Marcar como Lido
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm leading-relaxed text-foreground bg-muted/30 p-4 rounded-lg border italic">
-                  "{fb.mensagem}"
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  <Button variant="ghost" size="sm" className="text-primary font-bold">
+                    <CheckCircle2 className="mr-2 h-4 w-4" /> Marcar como Lido
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm leading-relaxed text-foreground bg-muted/30 p-4 rounded-lg border italic">
+                    "{fb.message}"
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+            {!isLoadingFeedbacks && feedbacks?.length === 0 && (
+              <div className="text-center p-12 text-muted-foreground bg-white rounded-lg border">
+                Nenhum feedback recebido até o momento.
+              </div>
+            )}
+          </div>
+        )}
       </div>
     )
   }
@@ -185,6 +202,8 @@ export default function FeedbackPage() {
                 id="message" 
                 placeholder="Descreva detalhadamente sua sugestão ou comentário..." 
                 className="min-h-[150px] bg-white"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
                 required
               />
             </div>

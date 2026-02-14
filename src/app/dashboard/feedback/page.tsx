@@ -3,7 +3,7 @@
 
 import { useState } from "react"
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
-import { collection, doc, serverTimestamp } from "firebase/firestore"
+import { collection, doc } from "firebase/firestore"
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -41,7 +41,11 @@ export default function FeedbackPage() {
   const { data: profile } = useDoc(userProfileRef)
   const isAdmin = profile?.role === 'admin'
 
-  const feedbacksRef = useMemoFirebase(() => collection(firestore, 'feedback'), [firestore])
+  // Só busca feedbacks se o usuário for admin
+  const feedbacksRef = useMemoFirebase(() => 
+    isAdmin ? collection(firestore, 'feedback') : null, 
+    [firestore, isAdmin]
+  )
   const { data: feedbacks, isLoading: isLoadingFeedbacks } = useCollection(feedbacksRef)
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -56,7 +60,8 @@ export default function FeedbackPage() {
       submissionDateTime: new Date().toISOString(),
     }
 
-    addDocumentNonBlocking(feedbacksRef, feedbackData)
+    const colRef = collection(firestore, 'feedback')
+    addDocumentNonBlocking(colRef, feedbackData)
       .then(() => {
         setLoading(false)
         setMessage("")
@@ -132,7 +137,7 @@ export default function FeedbackPage() {
                 </CardContent>
               </Card>
             ))}
-            {!isLoadingFeedbacks && feedbacks?.length === 0 && (
+            {!isLoadingFeedbacks && (!feedbacks || feedbacks.length === 0) && (
               <div className="text-center p-12 text-muted-foreground bg-white rounded-lg border">
                 Nenhum feedback recebido até o momento.
               </div>

@@ -2,7 +2,7 @@
 "use client"
 
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
-import { collection, doc, deleteDoc, updateDoc } from "firebase/firestore"
+import { collection, doc } from "firebase/firestore"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -23,7 +23,11 @@ export default function UsuariosPage() {
   const { data: profile } = useDoc(userProfileRef)
   const isAdmin = profile?.role === 'admin'
 
-  const usersRef = useMemoFirebase(() => collection(firestore, 'app_users'), [firestore])
+  // Só tenta buscar a coleção de usuários se o perfil atual for carregado e confirmado como admin
+  const usersRef = useMemoFirebase(() => 
+    isAdmin ? collection(firestore, 'app_users') : null, 
+    [firestore, isAdmin]
+  )
   const { data: users, isLoading } = useCollection(usersRef)
 
   const handleApprove = (userId: string) => {
@@ -52,8 +56,8 @@ export default function UsuariosPage() {
     }
   }
 
-  if (!isAdmin && !isLoading) {
-    return <div className="p-8 text-center">Acesso negado.</div>
+  if (!isAdmin && profile) {
+    return <div className="p-8 text-center text-muted-foreground">Acesso negado. Apenas administradores podem gerenciar usuários.</div>
   }
 
   return (
@@ -85,32 +89,32 @@ export default function UsuariosPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users?.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name}</TableCell>
+                {users?.map((u) => (
+                  <TableRow key={u.id}>
+                    <TableCell className="font-medium">{u.name}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2 text-muted-foreground">
-                        <Mail className="h-3 w-3" /> {user.email}
+                        <Mail className="h-3 w-3" /> {u.email}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={user.role === 'admin' ? "default" : "secondary"}>
-                        {user.role === 'admin' ? 'Administrador' : 'Membro'}
+                      <Badge variant={u.role === 'admin' ? "default" : "secondary"}>
+                        {u.role === 'admin' ? 'Administrador' : 'Membro'}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={user.status === 'approved' ? "outline" : "destructive"}>
-                        {user.status === 'approved' ? 'Aprovado' : 'Pendente'}
+                      <Badge variant={u.status === 'approved' ? "outline" : "destructive"}>
+                        {u.status === 'approved' ? 'Aprovado' : 'Pendente'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        {user.status === 'pending' && (
+                        {u.status === 'pending' && (
                           <Button 
                             variant="ghost" 
                             size="icon" 
                             className="text-green-600 h-8 w-8" 
-                            onClick={() => handleApprove(user.id)}
+                            onClick={() => handleApprove(u.id)}
                             title="Aprovar Usuário"
                           >
                             <UserCheck className="h-4 w-4" />
@@ -120,16 +124,16 @@ export default function UsuariosPage() {
                           variant="ghost" 
                           size="icon" 
                           className="text-primary h-8 w-8" 
-                          onClick={() => handleToggleRole(user.id, user.role)}
+                          onClick={() => handleToggleRole(u.id, u.role)}
                           title="Alternar Função"
                         >
-                          {user.role === 'admin' ? <ShieldAlert className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
+                          {u.role === 'admin' ? <ShieldAlert className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
                         </Button>
                         <Button 
                           variant="ghost" 
                           size="icon" 
                           className="text-destructive h-8 w-8" 
-                          onClick={() => handleDelete(user.id)}
+                          onClick={() => handleDelete(u.id)}
                           title="Remover Usuário"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -138,6 +142,13 @@ export default function UsuariosPage() {
                     </TableCell>
                   </TableRow>
                 ))}
+                {!isLoading && (!users || users.length === 0) && (
+                   <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      Nenhum usuário encontrado.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           )}

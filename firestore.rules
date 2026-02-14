@@ -11,12 +11,12 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function getUserRole() {
-      return get(/databases/$(database)/documents/app_users/$(request.auth.uid)).data.role;
-    }
-
     function isAdmin() {
-      return isSignedIn() && (getUserRole() == 'admin' || !exists(/databases/$(database)/documents/app_users/$(request.auth.uid)));
+      // Permite acesso se o usuário for admin OU se o documento de perfil ainda não existir (para o primeiro cadastro)
+      return isSignedIn() && (
+        !exists(/databases/$(database)/documents/app_users/$(request.auth.uid)) || 
+        get(/databases/$(database)/documents/app_users/$(request.auth.uid)).data.role == 'admin'
+      );
     }
 
     match /app_users/{appUserId} {

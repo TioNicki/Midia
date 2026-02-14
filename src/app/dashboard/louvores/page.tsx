@@ -63,8 +63,9 @@ export default function LouvoresPage() {
     toast({ title: "Louvor adicionado", description: "A música foi cadastrada no banco de dados." })
   }
 
-  const handleDelete = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation()
+  const handleDelete = (id: string) => {
+    if (!isAdminOrHigher) return
+
     if (window.confirm("Deseja remover este louvor permanentemente?")) {
       const docRef = doc(firestore, 'praise_songs', id)
       deleteDocumentNonBlocking(docRef)
@@ -175,7 +176,10 @@ export default function LouvoresPage() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem 
                         className="text-destructive focus:text-destructive cursor-pointer"
-                        onClick={(e) => handleDelete(e, song.id)}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          handleDelete(song.id)
+                        }}
                       >
                         <Trash2 className="mr-2 h-4 w-4" /> Excluir permanentemente
                       </DropdownMenuItem>

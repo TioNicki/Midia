@@ -53,6 +53,8 @@ export default function FuncoesPage() {
   }
 
   const handleDelete = (id: string) => {
+    if (!isModerator) return
+    
     if (window.confirm("Deseja realmente excluir esta função? Isso pode afetar escalas futuras.")) {
       const docRef = doc(firestore, 'duty_roles', id)
       deleteDocumentNonBlocking(docRef)
@@ -150,8 +152,11 @@ export default function FuncoesPage() {
                         type="button"
                         variant="ghost" 
                         size="icon" 
-                        className="h-8 w-8 text-destructive"
-                        onClick={() => handleDelete(role.id)}
+                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          handleDelete(role.id)
+                        }}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

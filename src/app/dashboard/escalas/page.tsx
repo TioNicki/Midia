@@ -107,6 +107,8 @@ export default function EscalasPage() {
   }
 
   const handleDelete = (id: string) => {
+    if (!isAdminOrHigher) return
+
     if (window.confirm("Deseja realmente excluir esta escala?")) {
       const docRef = doc(firestore, 'duty_rosters', id)
       deleteDocumentNonBlocking(docRef)
@@ -285,8 +287,11 @@ export default function EscalasPage() {
                           type="button"
                           variant="ghost" 
                           size="icon" 
-                          className="h-8 w-8 text-destructive"
-                          onClick={() => handleDelete(escala.id)}
+                          className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            handleDelete(escala.id)
+                          }}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

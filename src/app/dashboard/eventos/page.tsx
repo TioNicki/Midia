@@ -55,6 +55,8 @@ export default function EventosPage() {
   }
 
   const handleDelete = (id: string) => {
+    if (!isAdminOrHigher) return
+
     if (window.confirm("Deseja excluir este evento permanentemente?")) {
       const docRef = doc(firestore, 'important_dates', id)
       deleteDocumentNonBlocking(docRef)
@@ -155,8 +157,11 @@ export default function EventosPage() {
                           type="button"
                           variant="ghost" 
                           size="icon" 
-                          className="h-8 w-8 text-destructive hover:bg-red-50"
-                          onClick={() => handleDelete(evento.id)}
+                          className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            handleDelete(evento.id)
+                          }}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

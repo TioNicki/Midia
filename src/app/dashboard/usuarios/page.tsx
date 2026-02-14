@@ -160,7 +160,10 @@ export default function UsuariosPage() {
                                 variant="ghost" 
                                 size="icon" 
                                 className="text-green-600 h-8 w-8 hover:bg-green-50" 
-                                onClick={() => handleApprove(u.id)}
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  handleApprove(u.id)
+                                }}
                                 title="Aprovar Usuário"
                               >
                                 <UserCheck className="h-4 w-4" />
@@ -171,7 +174,10 @@ export default function UsuariosPage() {
                               variant="ghost" 
                               size="icon" 
                               className="text-primary h-8 w-8" 
-                              onClick={() => handleToggleRole(u.id, u.role)}
+                              onClick={(e) => {
+                                e.preventDefault()
+                                handleToggleRole(u.id, u.role)
+                              }}
                               title="Ciclar Função"
                             >
                               {u.role === 'moderator' ? <Crown className="h-4 w-4" /> : u.role === 'admin' ? <ShieldAlert className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
@@ -181,7 +187,10 @@ export default function UsuariosPage() {
                               variant="ghost" 
                               size="icon" 
                               className="text-destructive h-8 w-8 hover:bg-red-50" 
-                              onClick={() => handleDelete(u.id)}
+                              onClick={(e) => {
+                                e.preventDefault()
+                                handleDelete(u.id)
+                              }}
                               title="Remover Usuário"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -190,6 +199,9 @@ export default function UsuariosPage() {
                         )}
                         {!isModerator && u.id !== currentUser?.uid && (
                           <span className="text-xs text-muted-foreground italic">Somente Leitura</span>
+                        )}
+                        {u.id === currentUser?.uid && (
+                          <span className="text-xs text-primary italic font-bold">Perfil Atual</span>
                         )}
                       </div>
                     </TableCell>

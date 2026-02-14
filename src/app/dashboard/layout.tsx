@@ -1,4 +1,3 @@
-
 "use client"
 
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
@@ -19,8 +18,8 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const { user, isUserLoading } = useUser()
-  const { firestore } = useFirestore()
-  const { auth } = useAuth()
+  const firestore = useFirestore()
+  const auth = useAuth()
   const router = useRouter()
 
   const userProfileRef = useMemoFirebase(() => 
@@ -45,7 +44,6 @@ export default function DashboardLayout({
 
   if (!user) return null
 
-  // Check if account is approved
   if (profile && profile.status !== 'approved') {
     return (
       <div className="flex flex-col h-screen items-center justify-center bg-background p-6 text-center">

@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -41,9 +40,9 @@ const baseMenuItems = [
 export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const { auth } = useAuth()
+  const auth = useAuth()
   const { user } = useUser()
-  const { firestore } = useFirestore()
+  const firestore = useFirestore()
 
   const userProfileRef = useMemoFirebase(() => 
     user ? doc(firestore, 'app_users', user.uid) : null, 

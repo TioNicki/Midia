@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -20,13 +19,12 @@ export default function LoginPage() {
   const [name, setName] = useState("")
   const [loading, setLoading] = useState(false)
   
-  const { auth } = useAuth()
-  const { firestore } = useFirestore()
+  const auth = useAuth()
+  const firestore = useFirestore()
   const { user, isUserLoading } = useUser()
   const router = useRouter()
   const { toast } = useToast()
 
-  // Redireciona se o usuário já estiver logado
   useEffect(() => {
     if (!isUserLoading && user) {
       router.push("/dashboard")
@@ -69,14 +67,11 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      // 1. Cria o usuário no Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       const uid = userCredential.user.uid
 
-      // 2. Atualiza o nome no perfil do Auth
       await updateProfile(userCredential.user, { displayName: name })
 
-      // 3. Cria o documento no Firestore (como ADMIN e APROVADO para o seu primeiro acesso)
       const userRef = doc(firestore, 'app_users', uid)
       await setDoc(userRef, {
         id: uid,
@@ -92,7 +87,6 @@ export default function LoginPage() {
         description: "Você já é um administrador e pode acessar o painel.",
       })
       
-      // 4. Redireciona manualmente após garantir que o Firestore foi atualizado
       router.push("/dashboard")
     } catch (error: any) {
       console.error("Erro no cadastro:", error)

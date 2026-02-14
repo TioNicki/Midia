@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
@@ -9,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
 
 export default function DashboardOverview() {
-  const { firestore } = useFirestore()
+  const firestore = useFirestore()
   const { user } = useUser()
 
   const userProfileRef = useMemoFirebase(() => 

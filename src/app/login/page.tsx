@@ -1,10 +1,11 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth, useUser, useFirestore } from "@/firebase"
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
-import { doc, setDoc, getDoc } from "firebase/firestore"
+import { doc, setDoc } from "firebase/firestore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -115,7 +116,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4 bg-[url('https://picsum.photos/seed/faithflow1/1920/1080')] bg-cover bg-center">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 bg-[url('https://picsum.photos/seed/atos1/1920/1080')] bg-cover bg-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
       <Card className="w-full max-w-md relative z-10 shadow-2xl border-none">
         <CardHeader className="text-center space-y-1">
@@ -124,7 +125,7 @@ export default function LoginPage() {
               <Church className="h-8 w-8 text-white" />
             </div>
           </div>
-          <CardTitle className="text-3xl font-headline text-primary">FaithFlow</CardTitle>
+          <CardTitle className="text-3xl font-headline text-primary">Atos Multimídia</CardTitle>
           <CardDescription>Gerencie a mídia da sua igreja com excelência</CardDescription>
         </CardHeader>
         <CardContent>
@@ -211,7 +212,7 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="flex flex-col gap-2">
           <p className="text-xs text-center text-muted-foreground mt-2">
-            FaithFlow &copy; {currentYear ?? '...'} - Grupo de Mídia
+            Atos Multimídia &copy; {currentYear ?? '...'} - Grupo de Mídia
           </p>
         </CardFooter>
       </Card>

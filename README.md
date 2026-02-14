@@ -1,4 +1,4 @@
-# FaithFlow - Church Media Group
+# Atos Multimídia - Church Media Group
 
 Este é um sistema interno para gestão de grupos de mídia de igrejas, construído com NextJS e Firebase.
 

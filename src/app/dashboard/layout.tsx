@@ -76,7 +76,7 @@ export default function DashboardLayout({
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 bg-background/50 backdrop-blur-sm sticky top-0 z-10">
           <SidebarTrigger />
           <div className="flex flex-1 items-center justify-between">
-            <h1 className="text-lg font-headline font-semibold text-primary">FaithFlow Media</h1>
+            <h1 className="text-lg font-headline font-semibold text-primary">Atos Multimídia</h1>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               Dashboard / Painel Geral
             </div>

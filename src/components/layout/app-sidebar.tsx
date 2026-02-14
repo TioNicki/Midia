@@ -101,7 +101,7 @@ export function AppSidebar() {
                 <Music className="size-4" />
               </div>
               <div className="flex flex-col gap-0.5 leading-none">
-                <span className="font-semibold">FaithFlow</span>
+                <span className="font-semibold">Atos Multimídia</span>
                 <span className="text-xs opacity-70">Church Media</span>
               </div>
             </SidebarMenuButton>

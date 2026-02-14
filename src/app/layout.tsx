@@ -4,7 +4,7 @@ import './globals.css';
 import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
-  title: 'FaithFlow - Church Media Group',
+  title: 'Atos Multimídia - Church Media Group',
   description: 'Internal management for the church media group.',
 };
 

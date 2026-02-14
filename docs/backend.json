@@ -5,7 +5,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "AppUser",
       "type": "object",
-      "description": "Represents a user within the FaithFlow application. Roles determine access level: moderator (super-user), admin (content manager), member (standard access).",
+      "description": "Represents a user within the Atos Multimídia application. Roles determine access level: moderator (super-user), admin (content manager), member (standard access).",
       "properties": {
         "id": {
           "type": "string",

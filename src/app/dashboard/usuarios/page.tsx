@@ -112,7 +112,7 @@ export default function UsuariosPage() {
 
       <Card className="border-none shadow-md">
         <CardHeader>
-          <CardTitle>Equipe FaithFlow</CardTitle>
+          <CardTitle>Equipe Atos Multimídia</CardTitle>
           <CardDescription>Gerenciamento centralizado de voluntários e liderança.</CardDescription>
         </CardHeader>
         <CardContent>

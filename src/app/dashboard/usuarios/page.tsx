@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { UserCheck, Shield, ShieldAlert, Loader2, Trash2, Mail, Crown, AlertCircle } from "lucide-react"
+import { UserCheck, Shield, ShieldAlert, Loader2, Trash2, Mail, Crown, AlertCircle, Info } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 import { errorEmitter } from "@/firebase/error-emitter"
@@ -101,7 +101,7 @@ export default function UsuariosPage() {
       const userRef = doc(firestore, 'app_users', idToDelete)
       batch.delete(userRef)
 
-      batch.commit()
+      await batch.commit()
         .catch(async (error) => {
           errorEmitter.emit('permission-error', new FirestorePermissionError({
             path: `app_users/${idToDelete}`,
@@ -110,14 +110,14 @@ export default function UsuariosPage() {
         });
 
       toast({ 
-        title: "Remoção solicitada", 
-        description: "Os dados do usuário estão sendo removidos. Lembre-se de remover o e-mail no Console do Firebase." 
+        title: "Acesso Removido", 
+        description: "O perfil e dados do usuário foram apagados. O acesso dele ao dashboard foi bloqueado." 
       })
     } catch (error) {
       toast({ 
         variant: "destructive", 
-        title: "Erro ao iniciar exclusão", 
-        description: "Não foi possível processar a remoção dos dados." 
+        title: "Erro ao excluir", 
+        description: "Não foi possível processar a remoção." 
       })
     } finally {
       setIsDeleting(false)
@@ -153,6 +153,16 @@ export default function UsuariosPage() {
           </Badge>
         )}
       </div>
+
+      <Card className="bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800">
+        <CardContent className="pt-6 flex gap-4 items-start">
+          <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+          <div className="text-sm text-blue-800 dark:text-blue-300">
+            <p className="font-bold mb-1">Dica de Segurança:</p>
+            <p>Remover um usuário aqui bloqueia o acesso dele ao sistema imediatamente. No entanto, o e-mail dele continuará na lista do <strong>Firebase Console > Authentication</strong> até ser removido manualmente por lá.</p>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className="border-none shadow-md">
         <CardHeader>
@@ -270,9 +280,9 @@ export default function UsuariosPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir Usuário e Dados?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação removerá o perfil do usuário e todos os seus feedbacks enviados para economizar espaço.
+              Esta ação removerá o perfil do usuário e todos os seus feedbacks. O acesso dele ao sistema será bloqueado na hora.
               <br /><br />
-              <strong className="text-destructive text-xs">Nota: Para que o e-mail possa ser usado em um novo cadastro, você deve removê-lo manualmente na aba "Authentication" do Console do Firebase.</strong>
+              <strong className="text-destructive text-xs">Atenção: Para que o e-mail possa ser usado em um novo cadastro, você também deve apagá-lo na aba "Authentication" do Firebase.</strong>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -285,7 +295,7 @@ export default function UsuariosPage() {
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? "Excluindo..." : "Confirmar Remoção Total"}
+              {isDeleting ? "Excluindo..." : "Confirmar Remoção"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
-import { Loader2, AlertCircle, LogOut } from "lucide-react"
+import { Loader2, AlertCircle, LogOut, ShieldAlert } from "lucide-react"
 import { doc } from "firebase/firestore"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/firebase"
@@ -45,7 +45,30 @@ export default function DashboardLayout({
 
   if (!user) return null
 
-  if (profile && profile.status !== 'approved') {
+  // CASO 1: O usuário está logado no Auth, mas o documento dele no Firestore foi DELETADO
+  if (!profile) {
+    return (
+      <div className="flex flex-col h-screen items-center justify-center bg-background p-6 text-center">
+        <div className="max-w-md space-y-6 animate-in fade-in zoom-in duration-300">
+          <div className="bg-destructive/10 p-4 rounded-full w-fit mx-auto">
+            <ShieldAlert className="h-12 w-12 text-destructive" />
+          </div>
+          <h1 className="text-3xl font-bold text-primary">Acesso Revogado</h1>
+          <p className="text-muted-foreground">
+            Sua conta não possui um perfil ativo no sistema. Isso acontece se o seu acesso foi removido pela liderança ou se houve um erro no cadastro.
+          </p>
+          <div className="pt-6">
+            <Button variant="default" className="font-bold" onClick={() => signOut(auth).then(() => router.push("/login"))}>
+              <LogOut className="mr-2 h-4 w-4" /> Voltar para Login
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // CASO 2: O usuário existe, mas o status é 'pending'
+  if (profile.status !== 'approved') {
     return (
       <div className="flex flex-col h-screen items-center justify-center bg-background p-6 text-center">
         <div className="max-w-md space-y-6">

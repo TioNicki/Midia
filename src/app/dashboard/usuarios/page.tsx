@@ -159,7 +159,7 @@ export default function UsuariosPage() {
           <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
           <div className="text-sm text-blue-800 dark:text-blue-300">
             <p className="font-bold mb-1">Dica de Segurança:</p>
-            <p>Remover um usuário aqui bloqueia o acesso dele ao sistema imediatamente. No entanto, o e-mail dele continuará na lista do <strong>Firebase Console > Authentication</strong> até ser removido manualmente por lá.</p>
+            <p>Remover um usuário aqui bloqueia o acesso dele ao sistema imediatamente. No entanto, o e-mail dele continuará na lista do <strong>Firebase Console &gt; Authentication</strong> até ser removido manualmente por lá.</p>
           </div>
         </CardContent>
       </Card>

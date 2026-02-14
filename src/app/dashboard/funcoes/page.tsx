@@ -47,7 +47,7 @@ export default function FuncoesPage() {
     [firestore, user]
   )
   const { data: profile } = useDoc(userProfileRef)
-  const isModerator = profile?.role === 'moderator'
+  const isAdminOrHigher = profile?.role === 'admin' || profile?.role === 'moderator'
 
   const rolesRef = useMemoFirebase(() => collection(firestore, 'duty_roles'), [firestore])
   const { data: roles, isLoading } = useCollection(rolesRef)
@@ -73,12 +73,12 @@ export default function FuncoesPage() {
     setIsDeleteDialogOpen(false)
   }
 
-  if (!isModerator && profile) {
+  if (!isAdminOrHigher && profile) {
     return (
       <div className="flex flex-col items-center justify-center p-20 text-center">
         <Briefcase className="h-12 w-12 text-muted-foreground mb-4" />
         <h3 className="text-xl font-bold">Acesso Restrito</h3>
-        <p className="text-muted-foreground">Apenas moderadores podem gerenciar as funções da equipe.</p>
+        <p className="text-muted-foreground">Apenas administradores podem gerenciar as funções da equipe.</p>
       </div>
     )
   }

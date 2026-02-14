@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -86,9 +87,6 @@ export function AppSidebar() {
   
   if (isAdminOrHigher) {
     menuItems.push({ title: "Usuários", icon: Users, path: "/dashboard/usuarios" })
-  }
-  
-  if (isModerator) {
     menuItems.push({ title: "Funções", icon: Briefcase, path: "/dashboard/funcoes" })
   }
 

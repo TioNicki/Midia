@@ -182,6 +182,7 @@ export default function EscalasPage() {
                 setEditingId(null)
                 setNewRoster({ description: "", date: "" })
                 setAssignments([])
+                setIsCreateOpen(true)
               }}>
                 <Plus className="mr-2 h-4 w-4" /> Criar Escala
               </Button>

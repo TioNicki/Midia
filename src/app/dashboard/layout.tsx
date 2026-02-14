@@ -1,3 +1,4 @@
+
 "use client"
 
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
@@ -48,8 +49,8 @@ export default function DashboardLayout({
     return (
       <div className="flex flex-col h-screen items-center justify-center bg-background p-6 text-center">
         <div className="max-w-md space-y-6">
-          <div className="bg-amber-100 p-4 rounded-full w-fit mx-auto">
-            <AlertCircle className="h-12 w-12 text-amber-600" />
+          <div className="bg-amber-100 dark:bg-amber-900/30 p-4 rounded-full w-fit mx-auto">
+            <AlertCircle className="h-12 w-12 text-amber-600 dark:text-amber-400" />
           </div>
           <h1 className="text-3xl font-bold text-primary">Aguardando Aprovação</h1>
           <p className="text-muted-foreground">
@@ -72,7 +73,7 @@ export default function DashboardLayout({
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset className="bg-background">
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 bg-white/50 backdrop-blur-sm sticky top-0 z-10">
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 bg-background/50 backdrop-blur-sm sticky top-0 z-10">
           <SidebarTrigger />
           <div className="flex flex-1 items-center justify-between">
             <h1 className="text-lg font-headline font-semibold text-primary">FaithFlow Media</h1>

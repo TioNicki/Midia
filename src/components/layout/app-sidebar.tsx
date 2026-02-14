@@ -13,7 +13,9 @@ import {
   ShieldCheck,
   Users,
   Crown,
-  Briefcase
+  Briefcase,
+  Sun,
+  Moon
 } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
@@ -29,7 +31,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
-  useSidebar,
 } from "@/components/ui/sidebar"
 
 const baseMenuItems = [
@@ -46,6 +47,26 @@ export function AppSidebar() {
   const auth = useAuth()
   const { user } = useUser()
   const firestore = useFirestore()
+  
+  const [theme, setTheme] = React.useState<"light" | "dark">("light")
+
+  React.useEffect(() => {
+    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null
+    if (savedTheme) {
+      setTheme(savedTheme)
+      document.documentElement.classList.toggle("dark", savedTheme === "dark")
+    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      setTheme("dark")
+      document.documentElement.classList.add("dark")
+    }
+  }, [])
+
+  const toggleTheme = () => {
+    const newTheme = theme === "light" ? "dark" : "light"
+    setTheme(newTheme)
+    localStorage.setItem("theme", newTheme)
+    document.documentElement.classList.toggle("dark", newTheme === "dark")
+  }
 
   const userProfileRef = useMemoFirebase(() => 
     user ? doc(firestore, 'app_users', user.uid) : null, 
@@ -110,6 +131,12 @@ export function AppSidebar() {
       <SidebarFooter className="p-4">
         <SidebarSeparator className="mb-4 opacity-20" />
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={toggleTheme} tooltip="Alternar Tema" className="mb-2">
+              {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+              <span>{theme === "light" ? "Modo Escuro" : "Modo Claro"}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <div className="flex items-center gap-3 px-2 py-2 mb-4 overflow-hidden group-data-[collapsible=icon]:hidden">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sidebar-accent/20">

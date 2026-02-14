@@ -46,7 +46,7 @@ export default function DashboardOverview() {
   const stats = [
     { 
       title: "Próxima Escala", 
-      value: nextRoster ? format(new Date(nextRoster.date + 'T00:00:00'), 'dd/MM') : "---", 
+      value: nextRoster ? format(new Date(nextRoster.date + 'T12:00:00'), 'dd/MM') : "---", 
       icon: CalendarDays, 
       color: "text-primary" 
     },
@@ -144,7 +144,7 @@ export default function DashboardOverview() {
                     <h4 className="font-bold text-lg text-primary">{nextRoster.description}</h4>
                     <p className="text-sm text-muted-foreground flex items-center gap-2">
                       <CalendarDays className="h-3 w-3" />
-                      {format(new Date(nextRoster.date + 'T00:00:00'), 'dd/MM/yyyy')}
+                      {format(new Date(nextRoster.date + 'T12:00:00'), 'dd/MM/yyyy')}
                     </p>
                   </div>
                   <Button 
@@ -159,13 +159,13 @@ export default function DashboardOverview() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {nextRoster.assignments?.map((as: any, idx: number) => (
-                    <div key={idx} className={`flex items-center gap-3 p-3 rounded-md border ${as.userId === user?.uid ? 'bg-primary/10 border-primary/30 ring-1 ring-primary/20' : 'bg-white dark:bg-card'}`}>
+                    <div key={idx} className={`flex items-center gap-3 p-3 rounded-md border ${as.userId === user?.uid ? 'bg-primary/10 border-primary/30 ring-1 ring-primary/20' : 'bg-card border-border'}`}>
                       <div className={`p-2 rounded-full ${as.userId === user?.uid ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'}`}>
                         <UserIcon className="h-4 w-4" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-bold truncate">{as.userName}</p>
-                        <Badge variant="secondary" className="text-[10px] py-0">{as.roleName}</Badge>
+                        <p className="text-sm font-bold truncate text-foreground">{as.userName}</p>
+                        <Badge variant="secondary" className="text-[10px] py-0 bg-secondary/10 text-secondary border-secondary/20">{as.roleName}</Badge>
                       </div>
                     </div>
                   ))}

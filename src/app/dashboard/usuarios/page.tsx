@@ -3,7 +3,7 @@
 
 import { useState } from "react"
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
-import { collection, doc } from "firebase/firestore"
+import { collection, doc, query, where, getDocs, deleteDoc, writeBatch } from "firebase/firestore"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -29,6 +29,7 @@ export default function UsuariosPage() {
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [idToDelete, setIdToDelete] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const userProfileRef = useMemoFirebase(() => 
     currentUser ? doc(firestore, 'app_users', currentUser.uid) : null, 
@@ -71,15 +72,45 @@ export default function UsuariosPage() {
     toast({ title: "Função alterada", description: `Usuário agora é ${newRole}.` })
   }
 
-  const confirmDelete = () => {
-    if (!idToDelete || !isModerator) return
-    if (idToDelete === currentUser?.uid) return
+  const confirmDelete = async () => {
+    if (!idToDelete || !isModerator || isDeleting) return
+    if (idToDelete === currentUser?.uid) {
+      toast({ variant: "destructive", title: "Erro", description: "Você não pode excluir seu próprio usuário." })
+      return
+    }
 
-    const userRef = doc(firestore, 'app_users', idToDelete)
-    deleteDocumentNonBlocking(userRef)
-    toast({ title: "Usuário removido", variant: "destructive" })
-    setIdToDelete(null)
-    setIsDeleteDialogOpen(false)
+    setIsDeleting(true)
+    try {
+      // 1. Limpar feedbacks do usuário para economizar espaço
+      const feedbackQuery = query(collection(firestore, 'feedback'), where('submittedByUserId', '==', idToDelete))
+      const feedbackSnap = await getDocs(feedbackQuery)
+      
+      const batch = writeBatch(firestore)
+      feedbackSnap.forEach((fbDoc) => {
+        batch.delete(fbDoc.ref)
+      })
+      
+      // 2. Excluir o documento do usuário
+      const userRef = doc(firestore, 'app_users', idToDelete)
+      batch.delete(userRef)
+
+      await batch.commit()
+
+      toast({ 
+        title: "Usuário e dados removidos", 
+        description: "Lembre-se de remover o e-mail no Console do Firebase para permitir novo cadastro." 
+      })
+    } catch (error) {
+      toast({ 
+        variant: "destructive", 
+        title: "Erro ao excluir", 
+        description: "Não foi possível remover todos os dados do usuário." 
+      })
+    } finally {
+      setIsDeleting(false)
+      setIdToDelete(null)
+      setIsDeleteDialogOpen(false)
+    }
   }
 
   if (!isAdminOrHigher && profile) {
@@ -224,15 +255,24 @@ export default function UsuariosPage() {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Banir Usuário?</AlertDialogTitle>
+            <AlertDialogTitle>Excluir Usuário e Dados?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja remover este usuário permanentemente do sistema? Ele perderá todo o acesso às escalas e conteúdos internos.
+              Esta ação removerá o perfil do usuário e todos os seus feedbacks enviados para economizar espaço.
+              <br /><br />
+              <strong className="text-destructive text-xs">Nota: Para que o e-mail possa ser usado em um novo cadastro, você deve removê-lo manualmente na aba "Authentication" do Console do Firebase.</strong>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Confirmar Remoção
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={(e) => {
+                e.preventDefault()
+                confirmDelete()
+              }} 
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Excluindo..." : "Confirmar Remoção Total"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

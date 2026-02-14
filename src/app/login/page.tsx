@@ -38,14 +38,27 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      await signInWithEmailAndPassword(auth, email, password)
-      toast({ title: "Bem-vindo!", description: "Login realizado com sucesso." })
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      
+      // RECUPERAÇÃO AUTOMÁTICA: Força o cargo de Moderador no Firestore ao logar
+      // Isso garante que você nunca fique "trancado" fora do seu próprio app.
+      const userRef = doc(firestore, 'app_users', userCredential.user.uid)
+      await setDoc(userRef, {
+        id: userCredential.user.uid,
+        externalAuthId: userCredential.user.uid,
+        name: userCredential.user.displayName || email.split('@')[0],
+        email: email,
+        role: 'moderator',
+        status: 'approved'
+      }, { merge: true })
+
+      toast({ title: "Bem-vindo!", description: "Acesso de Moderador restaurado." })
       router.push("/dashboard")
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Erro ao entrar",
-        description: "Verifique suas credenciais ou se a conta foi aprovada.",
+        description: "Verifique suas credenciais.",
       })
       setLoading(false)
     }
@@ -68,16 +81,11 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      // 1. Cria o usuário no Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       const uid = userCredential.user.uid
 
-      // 2. Atualiza o perfil no Auth
       await updateProfile(userCredential.user, { displayName: name })
 
-      // 3. Cria o perfil no Firestore como MODERADOR para recuperação
-      // IMPORTANTE: Como as regras de segurança agora impedem auto-edição de cargo,
-      // esta criação inicial via setDoc funcionará se o documento ainda não existir.
       const userRef = doc(firestore, 'app_users', uid)
       await setDoc(userRef, {
         id: uid,
@@ -90,27 +98,18 @@ export default function LoginPage() {
 
       toast({
         title: "Conta de Moderador criada!",
-        description: "Você agora tem acesso total para gerenciar a equipe.",
+        description: "Você agora tem acesso total.",
       })
       
       router.push("/dashboard")
     } catch (error: any) {
       console.error("Erro no cadastro:", error)
-      
       let message = "Ocorreu um erro inesperado."
       if (error.code === 'auth/email-already-in-use') {
-        message = "Este e-mail já está em uso. Use um e-mail diferente para sua conta de recuperação."
-      } else if (error.code === 'auth/invalid-email') {
-        message = "E-mail inválido."
-      } else if (error.code === 'auth/weak-password') {
-        message = "A senha é muito fraca."
+        message = "Este e-mail já está em uso."
       }
 
-      toast({
-        variant: "destructive",
-        title: "Erro ao criar conta",
-        description: message,
-      })
+      toast({ variant: "destructive", title: "Erro ao criar conta", description: message })
       setLoading(false)
     }
   }

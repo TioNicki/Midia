@@ -6,10 +6,8 @@ import { collection, doc } from "firebase/firestore"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
 import { CalendarDays, Plus, Edit2, Trash2, Filter, Loader2 } from "lucide-react"
 import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
 
 export default function EscalasPage() {
   const firestore = useFirestore()
@@ -20,7 +18,7 @@ export default function EscalasPage() {
     [firestore, user]
   )
   const { data: profile } = useDoc(userProfileRef)
-  const isAdmin = profile?.role === 'admin'
+  const isAdminOrHigher = profile?.role === 'admin' || profile?.role === 'moderator'
 
   const rostersRef = useMemoFirebase(() => collection(firestore, 'duty_rosters'), [firestore])
   const { data: rosters, isLoading } = useCollection(rostersRef)
@@ -36,7 +34,7 @@ export default function EscalasPage() {
           <Button variant="outline">
             <Filter className="mr-2 h-4 w-4" /> Filtrar
           </Button>
-          {isAdmin && (
+          {isAdminOrHigher && (
             <Button className="font-bold">
               <Plus className="mr-2 h-4 w-4" /> Criar Escala
             </Button>
@@ -61,7 +59,7 @@ export default function EscalasPage() {
                   <TableHead>Data</TableHead>
                   <TableHead>Culto / Evento</TableHead>
                   <TableHead>Descrição</TableHead>
-                  {isAdmin && <TableHead className="text-right">Ações</TableHead>}
+                  {isAdminOrHigher && <TableHead className="text-right">Ações</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -75,7 +73,7 @@ export default function EscalasPage() {
                     </TableCell>
                     <TableCell>Culto</TableCell>
                     <TableCell>{escala.description}</TableCell>
-                    {isAdmin && (
+                    {isAdminOrHigher && (
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-primary">
@@ -91,7 +89,7 @@ export default function EscalasPage() {
                 ))}
                 {!isLoading && rosters?.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={isAdmin ? 4 : 3} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={isAdminOrHigher ? 4 : 3} className="text-center py-8 text-muted-foreground">
                       Nenhuma escala encontrada.
                     </TableCell>
                   </TableRow>

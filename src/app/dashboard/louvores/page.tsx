@@ -6,7 +6,7 @@ import { collection, doc } from "firebase/firestore"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Music, Plus, Search, MoreVertical, PlayCircle, Loader2 } from "lucide-react"
+import { Plus, Search, MoreVertical, PlayCircle, Loader2 } from "lucide-react"
 import { useState } from "react"
 
 export default function LouvoresPage() {
@@ -20,7 +20,7 @@ export default function LouvoresPage() {
     [firestore, user]
   )
   const { data: profile } = useDoc(userProfileRef)
-  const isAdmin = profile?.role === 'admin'
+  const isAdminOrHigher = profile?.role === 'admin' || profile?.role === 'moderator'
 
   const songsRef = useMemoFirebase(() => collection(firestore, 'praise_songs'), [firestore])
   const { data: songs, isLoading } = useCollection(songsRef)
@@ -37,7 +37,7 @@ export default function LouvoresPage() {
           <h2 className="text-3xl font-headline font-bold text-primary">Banco de Louvores</h2>
           <p className="text-muted-foreground">Cadastre e organize as músicas para a projeção e streaming.</p>
         </div>
-        {isAdmin && (
+        {isAdminOrHigher && (
           <Button className="font-bold">
             <Plus className="mr-2 h-4 w-4" /> Novo Louvor
           </Button>

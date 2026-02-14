@@ -18,7 +18,7 @@ export default function EventosPage() {
     [firestore, user]
   )
   const { data: profile } = useDoc(userProfileRef)
-  const isAdmin = profile?.role === 'admin'
+  const isAdminOrHigher = profile?.role === 'admin' || profile?.role === 'moderator'
 
   const eventsRef = useMemoFirebase(() => collection(firestore, 'important_dates'), [firestore])
   const { data: events, isLoading } = useCollection(eventsRef)
@@ -30,7 +30,7 @@ export default function EventosPage() {
           <h2 className="text-3xl font-headline font-bold text-primary">Datas Importantes</h2>
           <p className="text-muted-foreground">Calendário de eventos que exigem cobertura especial de mídia.</p>
         </div>
-        {isAdmin && (
+        {isAdminOrHigher && (
           <Button className="font-bold">
             <Plus className="mr-2 h-4 w-4" /> Novo Evento
           </Button>
@@ -67,7 +67,7 @@ export default function EventosPage() {
                   </p>
                   <div className="mt-6 flex gap-2">
                     <Button variant="outline" size="sm" className="flex-1">Ver Detalhes</Button>
-                    {isAdmin && <Button variant="secondary" size="sm" className="flex-1">Editar</Button>}
+                    {isAdminOrHigher && <Button variant="secondary" size="sm" className="flex-1">Editar</Button>}
                   </div>
                 </div>
               </Card>

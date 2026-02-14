@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
@@ -16,7 +17,7 @@ export default function DashboardOverview() {
     [firestore, user]
   )
   const { data: profile, isLoading: isProfileLoading } = useDoc(userProfileRef)
-  const isAdmin = profile?.role === 'admin'
+  const isAdminOrHigher = profile?.role === 'admin' || profile?.role === 'moderator'
 
   const rostersRef = useMemoFirebase(() => collection(firestore, 'duty_rosters'), [firestore])
   const { data: rosters } = useCollection(rostersRef)
@@ -72,7 +73,7 @@ export default function DashboardOverview() {
           <h2 className="text-3xl font-headline font-bold text-primary">Olá, {profile?.name || user?.email?.split('@')[0]}!</h2>
           <p className="text-muted-foreground">Aqui está um resumo do que está acontecendo no grupo de mídia.</p>
         </div>
-        {isAdmin && (
+        {isAdminOrHigher && (
           <Button className="h-11 shadow-lg font-bold">
             <Plus className="mr-2 h-4 w-4" /> Nova Escala
           </Button>
@@ -133,13 +134,13 @@ export default function DashboardOverview() {
                   <span className="text-xs font-mono bg-muted px-2 py-1 rounded">ID: {song.id.slice(0, 4)}</span>
                 </div>
               ))}
-              {!songs || songs.length === 0 && (
+              {(!songs || songs.length === 0) && (
                 <p className="text-sm text-center text-muted-foreground py-8 italic">
                   Nenhum louvor cadastrado.
                 </p>
               )}
             </div>
-            {isAdmin && (
+            {isAdminOrHigher && (
               <Button variant="outline" className="w-full mt-4">Ver Todos os Louvores</Button>
             )}
           </CardContent>

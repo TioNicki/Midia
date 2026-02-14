@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth, useUser, useFirestore } from "@/firebase"
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
-import { doc, getDoc, setDoc } from "firebase/firestore"
+import { doc, setDoc } from "firebase/firestore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -66,18 +66,20 @@ export default function LoginPage() {
       await updateProfile(userCredential.user, { displayName: name })
 
       const userRef = doc(firestore, 'app_users', uid)
+      
+      // Criando o perfil como ADMIN e APROVADO para facilitar o setup inicial
       await setDoc(userRef, {
         id: uid,
         externalAuthId: uid,
         name: name,
         email: email,
-        role: 'member',
-        status: 'pending' // Default to pending
+        role: 'admin',
+        status: 'approved'
       })
 
       toast({
-        title: "Conta criada!",
-        description: "Sua conta foi criada e aguarda aprovação do administrador.",
+        title: "Conta de Administrador criada!",
+        description: "Você já pode acessar o painel de controle.",
       })
       router.push("/dashboard")
     } catch (error: any) {
@@ -175,7 +177,7 @@ export default function LoginPage() {
                   />
                 </div>
                 <Button className="w-full h-11 text-lg font-bold" type="submit" disabled={loading}>
-                  {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <><UserPlus className="mr-2 h-5 w-5" /> Criar Conta</>}
+                  {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <><UserPlus className="mr-2 h-5 w-5" /> Criar Conta Admin</>}
                 </Button>
               </form>
             </TabsContent>

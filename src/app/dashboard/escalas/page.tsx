@@ -60,7 +60,7 @@ export default function EscalasPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [idToDelete, setIdToDelete] = useState<string | null>(null)
-  const [newRoster, setNewRoster] = useState({ date: "", description: "" })
+  const [newRoster, setNewRoster] = useState({ description: "" })
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [currentAssignment, setCurrentAssignment] = useState({ userId: "", roleId: "" })
@@ -125,7 +125,7 @@ export default function EscalasPage() {
       createdAt: new Date().toISOString()
     })
     
-    setNewRoster({ date: "", description: "" })
+    setNewRoster({ description: "" })
     setSelectedDate(undefined)
     setAssignments([])
     setIsCreateOpen(false)
@@ -165,7 +165,7 @@ export default function EscalasPage() {
               <form onSubmit={handleCreate} className="space-y-6 py-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2 flex flex-col">
-                    <Label htmlFor="date">Data do Culto</Label>
+                    <Label>Data do Culto</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button

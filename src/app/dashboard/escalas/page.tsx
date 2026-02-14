@@ -62,6 +62,7 @@ export default function EscalasPage() {
   const [idToDelete, setIdToDelete] = useState<string | null>(null)
   const [newRoster, setNewRoster] = useState({ description: "" })
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [currentAssignment, setCurrentAssignment] = useState({ userId: "", roleId: "" })
 
@@ -166,12 +167,12 @@ export default function EscalasPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2 flex flex-col">
                     <Label>Data do Culto</Label>
-                    <Popover>
+                    <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                       <PopoverTrigger asChild>
                         <Button
                           variant={"outline"}
                           className={cn(
-                            "w-full justify-start text-left font-normal h-10 bg-white",
+                            "w-full justify-start text-left font-normal h-10",
                             !selectedDate && "text-muted-foreground"
                           )}
                         >
@@ -183,7 +184,10 @@ export default function EscalasPage() {
                         <Calendar
                           mode="single"
                           selected={selectedDate}
-                          onSelect={setSelectedDate}
+                          onSelect={(date) => {
+                            setSelectedDate(date);
+                            setIsCalendarOpen(false);
+                          }}
                           initialFocus
                           locale={ptBR}
                         />

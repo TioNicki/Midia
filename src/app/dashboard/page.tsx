@@ -4,13 +4,15 @@
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
 import { collection, doc } from "firebase/firestore"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { CalendarDays, Music, Bell, MessageSquare, Plus, Loader2 } from "lucide-react"
+import { CalendarDays, Music, Bell, MessageSquare, Plus, Loader2, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
+import { useRouter } from "next/navigation"
 
 export default function DashboardOverview() {
   const firestore = useFirestore()
   const { user } = useUser()
+  const router = useRouter()
 
   const userProfileRef = useMemoFirebase(() => 
     user ? doc(firestore, 'app_users', user.uid) : null, 
@@ -34,7 +36,7 @@ export default function DashboardOverview() {
   const stats = [
     { 
       title: "Próxima Escala", 
-      value: rosters && rosters[0] ? format(new Date(rosters[0].date), 'dd/MM, HH:mm') : "---", 
+      value: rosters && rosters[0] ? format(new Date(rosters[0].date + 'T00:00:00'), 'dd/MM') : "---", 
       icon: CalendarDays, 
       color: "text-primary" 
     },
@@ -74,7 +76,10 @@ export default function DashboardOverview() {
           <p className="text-muted-foreground">Aqui está um resumo do que está acontecendo no grupo de mídia.</p>
         </div>
         {isAdminOrHigher && (
-          <Button className="h-11 shadow-lg font-bold">
+          <Button 
+            className="h-11 shadow-lg font-bold"
+            onClick={() => router.push("/dashboard/escalas")}
+          >
             <Plus className="mr-2 h-4 w-4" /> Nova Escala
           </Button>
         )}
@@ -106,8 +111,15 @@ export default function DashboardOverview() {
                 <div className="p-4 bg-muted/30 rounded-lg border border-dashed text-center">
                   <p className="text-sm font-medium">{rosters[0].description}</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Veja os detalhes na aba Escalas.
+                    {format(new Date(rosters[0].date + 'T00:00:00'), 'dd/MM/yyyy')}
                   </p>
+                  <Button 
+                    variant="link" 
+                    className="mt-2 text-primary"
+                    onClick={() => router.push("/dashboard/escalas")}
+                  >
+                    Ver detalhes na aba Escalas
+                  </Button>
                 </div>
               ) : (
                 <p className="text-sm text-center text-muted-foreground py-8 italic">
@@ -131,7 +143,7 @@ export default function DashboardOverview() {
                     <p className="text-sm font-medium">{song.title}</p>
                     <p className="text-xs text-muted-foreground">{song.artist}</p>
                   </div>
-                  <span className="text-xs font-mono bg-muted px-2 py-1 rounded">ID: {song.id.slice(0, 4)}</span>
+                  <span className="text-xs font-mono bg-muted px-2 py-1 rounded">ID: {song.id.slice(-4)}</span>
                 </div>
               ))}
               {(!songs || songs.length === 0) && (
@@ -140,9 +152,13 @@ export default function DashboardOverview() {
                 </p>
               )}
             </div>
-            {isAdminOrHigher && (
-              <Button variant="outline" className="w-full mt-4">Ver Todos os Louvores</Button>
-            )}
+            <Button 
+              variant="outline" 
+              className="w-full mt-4"
+              onClick={() => router.push("/dashboard/louvores")}
+            >
+              Ver Todos os Louvores <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
           </CardContent>
         </Card>
       </div>

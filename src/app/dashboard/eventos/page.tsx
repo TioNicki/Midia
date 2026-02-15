@@ -7,7 +7,7 @@ import { collection, doc } from "firebase/firestore"
 import { addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Bell, Calendar, MapPin, Plus, Loader2, Trash2 } from "lucide-react"
+import { Bell, Calendar, MapPin, Plus, Loader2, Trash2, Copy } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import {
@@ -80,6 +80,15 @@ export default function EventosPage() {
     setIsDeleteDialogOpen(false)
   }
 
+  const copyToClipboard = (text: string) => {
+    if (!text) return
+    navigator.clipboard.writeText(text)
+    toast({
+      title: "Endereço copiado!",
+      description: "O local foi copiado para sua área de transferência.",
+    })
+  }
+
   if (!isMounted) return null
 
   return (
@@ -123,10 +132,10 @@ export default function EventosPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="location">Local</Label>
+                  <Label htmlFor="location">Local / Endereço</Label>
                   <Input 
                     id="location" 
-                    placeholder="Ex: Templo Principal" 
+                    placeholder="Ex: Rua X, 123 - Bairro" 
                     value={newEvent.location}
                     onChange={(e) => setNewEvent({...newEvent, location: e.target.value})}
                   />
@@ -191,12 +200,28 @@ export default function EventosPage() {
                       )}
                     </div>
                   </div>
-                  <h3 className="text-xl font-bold mb-4">{evento.title}</h3>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    {evento.location || 'Local não informado'}
+                  <h3 className="text-xl font-bold mb-2">{evento.title}</h3>
+                  
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
+                      <MapPin className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{evento.location || 'Local não informado'}</span>
+                    </div>
+                    {evento.location && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-primary hover:bg-primary/10 shrink-0"
+                        onClick={() => copyToClipboard(evento.location)}
+                        title="Copiar Endereço"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
-                  <p className="mt-4 text-sm text-muted-foreground line-clamp-2">
+
+                  <p className="mt-4 text-sm text-muted-foreground line-clamp-3">
                     {evento.description}
                   </p>
                 </div>

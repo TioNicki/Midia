@@ -199,7 +199,6 @@ export default function LouvoresPage() {
         </div>
       )}
 
-      {/* Diálogo de Formulário (Criar/Editar) */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-2xl bg-card h-[90vh] flex flex-col overflow-hidden">
           <DialogHeader className="shrink-0">
@@ -262,7 +261,6 @@ export default function LouvoresPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Diálogo de Visualização da Letra */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-3xl h-[90vh] flex flex-col bg-card overflow-hidden">
           <DialogHeader className="shrink-0">

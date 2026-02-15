@@ -309,7 +309,6 @@ export default function EscalasPage() {
         </CardContent>
       </Card>
 
-      {/* Diálogo de Criar/Editar Escala */}
       <Dialog open={isCreateOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
         <DialogContent className="max-w-[95vw] sm:max-w-3xl h-[90vh] overflow-hidden flex flex-col bg-card">
           <DialogHeader className="shrink-0">
@@ -343,7 +342,6 @@ export default function EscalasPage() {
                 </div>
               </div>
 
-              {/* Seção de Membros */}
               <div className="space-y-4 border p-4 rounded-lg bg-muted/20">
                 <h4 className="font-bold text-sm flex items-center gap-2">
                   <UserPlus className="h-4 w-4" /> Escalar Equipe
@@ -410,7 +408,6 @@ export default function EscalasPage() {
                 </div>
               </div>
 
-              {/* Seção de Louvores */}
               <div className="space-y-4 border p-4 rounded-lg bg-muted/20">
                 <h4 className="font-bold text-sm flex items-center gap-2">
                   <Music className="h-4 w-4" /> Repertório (Louvores)
@@ -473,7 +470,6 @@ export default function EscalasPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Diálogo de Visualização Detalhada */}
       <Dialog open={!!viewingRoster} onOpenChange={(open) => !open && setViewingRoster(null)}>
         <DialogContent className="max-w-[95vw] sm:max-w-2xl h-[90vh] flex flex-col bg-card overflow-hidden">
           <DialogHeader className="shrink-0">
@@ -522,7 +518,6 @@ export default function EscalasPage() {
                             <span className="text-xs text-muted-foreground truncate">{s?.artist}</span>
                           </div>
                         </div>
-                        {s?.notes && <Badge variant="outline" className="text-[10px] shrink-0 ml-2">{s.notes}</Badge>}
                       </div>
                     )
                   })}

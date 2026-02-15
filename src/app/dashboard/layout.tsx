@@ -45,7 +45,6 @@ export default function DashboardLayout({
 
   if (!user) return null
 
-  // CASO 1: O usuário está logado no Auth, mas o documento dele no Firestore foi DELETADO
   if (!profile) {
     return (
       <div className="flex flex-col h-screen items-center justify-center bg-background p-6 text-center">
@@ -67,7 +66,6 @@ export default function DashboardLayout({
     )
   }
 
-  // CASO 2: O usuário existe, mas o status é 'pending'
   if (profile.status !== 'approved') {
     return (
       <div className="flex flex-col h-screen items-center justify-center bg-background p-6 text-center">

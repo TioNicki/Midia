@@ -199,7 +199,7 @@ export default function EscalasPage() {
           <p className="text-muted-foreground">Organização das equipes por culto e evento.</p>
         </div>
         {isAdminOrHigher && (
-          <Button className="font-bold" onClick={() => {
+          <Button className="font-bold w-full md:w-auto" onClick={() => {
             setEditingId(null)
             setNewRoster({ description: "", date: "" })
             setAssignments([])
@@ -211,12 +211,12 @@ export default function EscalasPage() {
         )}
       </div>
 
-      <Card>
-        <CardHeader>
+      <Card className="overflow-hidden">
+        <CardHeader className="px-4 py-6 sm:p-6">
           <CardTitle>Próximas Datas</CardTitle>
           <CardDescription>Visualize quem estará escalado nos próximos cultos.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0 sm:px-6">
           {isLoading ? (
             <div className="flex justify-center p-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -225,23 +225,23 @@ export default function EscalasPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Culto / Evento</TableHead>
+                  <TableHead className="px-4">Data</TableHead>
+                  <TableHead>Culto</TableHead>
                   <TableHead className="hidden md:table-cell">Equipe</TableHead>
-                  <TableHead className="hidden md:table-cell text-center">Músicas</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead className="hidden md:table-cell text-center">Louvores</TableHead>
+                  <TableHead className="text-right px-4">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {sortedRosters.map((escala) => (
                   <TableRow key={escala.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                        {escala.date ? format(new Date(escala.date + 'T12:00:00'), 'dd/MM/yyyy') : '---'}
+                    <TableCell className="font-medium px-4">
+                      <div className="flex items-center gap-2 whitespace-nowrap">
+                        <CalendarDays className="h-4 w-4 text-muted-foreground hidden sm:inline" />
+                        {escala.date ? format(new Date(escala.date + 'T12:00:00'), 'dd/MM') : '--/--'}
                       </div>
                     </TableCell>
-                    <TableCell>{escala.description}</TableCell>
+                    <TableCell className="max-w-[150px] truncate">{escala.description}</TableCell>
                     <TableCell className="hidden md:table-cell">
                        <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
                          {escala.assignments?.length || 0} Membros
@@ -252,14 +252,15 @@ export default function EscalasPage() {
                          {escala.songIds?.length || 0} Louvores
                        </Badge>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                    <TableCell className="text-right px-4">
+                      <div className="flex justify-end gap-1 sm:gap-2">
                         <Button 
                           type="button"
                           variant="ghost" 
                           size="icon" 
                           className="h-8 w-8 text-secondary"
                           onClick={() => setViewingRoster(escala)}
+                          title="Ver Detalhes"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -272,6 +273,7 @@ export default function EscalasPage() {
                               size="icon" 
                               className="h-8 w-8 text-primary hover:bg-primary/10"
                               onClick={() => handleOpenEdit(escala)}
+                              title="Editar"
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
@@ -284,6 +286,7 @@ export default function EscalasPage() {
                                 setIdToDelete(escala.id)
                                 setIsDeleteDialogOpen(true)
                               }}
+                              title="Excluir"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -308,7 +311,7 @@ export default function EscalasPage() {
 
       {/* Diálogo de Criar/Editar Escala */}
       <Dialog open={isCreateOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
-        <DialogContent className="max-w-3xl h-[90vh] overflow-hidden flex flex-col bg-card">
+        <DialogContent className="max-w-[95vw] sm:max-w-3xl h-[90vh] overflow-hidden flex flex-col bg-card">
           <DialogHeader className="shrink-0">
             <DialogTitle>{editingId ? 'Editar Escala' : 'Nova Escala'}</DialogTitle>
             <DialogDescription>Preencha os dados, escale a equipe e selecione as músicas.</DialogDescription>
@@ -388,16 +391,16 @@ export default function EscalasPage() {
                 <div className="space-y-2 mt-4">
                   {assignments.map((as, idx) => (
                     <div key={idx} className="flex items-center justify-between bg-background p-2 rounded border text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold">{as.userName}</span>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-bold truncate">{as.userName}</span>
                         <span className="text-muted-foreground">→</span>
-                        <Badge variant="secondary" className="bg-secondary/10 text-secondary border-secondary/20">{as.roleName}</Badge>
+                        <Badge variant="secondary" className="bg-secondary/10 text-secondary border-secondary/20 truncate">{as.roleName}</Badge>
                       </div>
                       <Button 
                         type="button" 
                         variant="ghost" 
                         size="icon" 
-                        className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                        className="h-6 w-6 text-destructive hover:bg-destructive/10 shrink-0"
                         onClick={() => removeAssignment(idx)}
                       >
                         <X className="h-3 w-3" />
@@ -436,16 +439,16 @@ export default function EscalasPage() {
                     const s = songs?.find(song => song.id === sid)
                     return (
                       <div key={sid} className="flex items-center justify-between bg-background p-2 rounded border text-sm">
-                        <div className="flex items-center gap-2">
-                          <Music className="h-3 w-3 text-primary" />
-                          <span className="font-bold">{s?.title || 'Música removida'}</span>
-                          <span className="text-xs text-muted-foreground">{s?.artist}</span>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Music className="h-3 w-3 text-primary shrink-0" />
+                          <span className="font-bold truncate">{s?.title || 'Música removida'}</span>
+                          <span className="text-xs text-muted-foreground truncate hidden sm:inline">{s?.artist}</span>
                         </div>
                         <Button 
                           type="button" 
                           variant="ghost" 
                           size="icon" 
-                          className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                          className="h-6 w-6 text-destructive hover:bg-destructive/10 shrink-0"
                           onClick={() => removeSong(sid)}
                         >
                           <X className="h-3 w-3" />
@@ -461,9 +464,9 @@ export default function EscalasPage() {
               <div className="h-4"></div>
             </form>
           </ScrollArea>
-          <DialogFooter className="pt-4 border-t shrink-0">
-            <Button type="button" variant="outline" onClick={handleCloseDialog}>Cancelar</Button>
-            <Button type="submit" onClick={handleSave} className="font-bold">
+          <DialogFooter className="pt-4 border-t shrink-0 flex flex-col sm:flex-row gap-2">
+            <Button type="button" variant="outline" onClick={handleCloseDialog} className="w-full sm:w-auto">Cancelar</Button>
+            <Button type="submit" onClick={handleSave} className="font-bold w-full sm:w-auto">
               {editingId ? 'Salvar Alterações' : 'Publicar Escala'}
             </Button>
           </DialogFooter>
@@ -472,13 +475,13 @@ export default function EscalasPage() {
 
       {/* Diálogo de Visualização Detalhada */}
       <Dialog open={!!viewingRoster} onOpenChange={(open) => !open && setViewingRoster(null)}>
-        <DialogContent className="bg-card max-w-2xl h-[90vh] flex flex-col overflow-hidden">
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl h-[90vh] flex flex-col bg-card overflow-hidden">
           <DialogHeader className="shrink-0">
-            <DialogTitle className="flex items-center gap-2 text-2xl">
-              <CalendarDays className="h-6 w-6 text-primary" />
+            <DialogTitle className="flex items-center gap-2 text-xl sm:text-2xl truncate">
+              <CalendarDays className="h-6 w-6 text-primary shrink-0" />
               {viewingRoster?.description}
             </DialogTitle>
-            <DialogDescription className="text-lg">
+            <DialogDescription className="text-base sm:text-lg">
               {viewingRoster?.date ? format(new Date(viewingRoster.date + 'T12:00:00'), 'dd/MM/yyyy') : ''}
             </DialogDescription>
           </DialogHeader>
@@ -491,8 +494,8 @@ export default function EscalasPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {viewingRoster?.assignments?.map((as: any, idx: number) => (
                     <div key={idx} className="flex items-center justify-between p-3 rounded-lg border bg-muted/20">
-                      <span className="font-bold text-sm">{as.userName}</span>
-                      <Badge variant="secondary" className="text-[10px] bg-secondary/10 text-secondary border-secondary/20">
+                      <span className="font-bold text-sm truncate mr-2">{as.userName}</span>
+                      <Badge variant="secondary" className="text-[10px] bg-secondary/10 text-secondary border-secondary/20 shrink-0">
                         {as.roleName}
                       </Badge>
                     </div>
@@ -512,14 +515,14 @@ export default function EscalasPage() {
                     const s = songs?.find(song => song.id === sid)
                     return (
                       <div key={sid} className="flex items-center justify-between p-3 rounded-lg border bg-muted/20">
-                        <div className="flex items-center gap-3">
-                          <PlayCircle className="h-5 w-5 text-primary" />
-                          <div className="flex flex-col">
-                            <span className="font-bold text-sm">{s?.title}</span>
-                            <span className="text-xs text-muted-foreground">{s?.artist}</span>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <PlayCircle className="h-5 w-5 text-primary shrink-0" />
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-bold text-sm truncate">{s?.title}</span>
+                            <span className="text-xs text-muted-foreground truncate">{s?.artist}</span>
                           </div>
                         </div>
-                        {s?.notes && <Badge variant="outline" className="text-[10px]">{s.notes}</Badge>}
+                        {s?.notes && <Badge variant="outline" className="text-[10px] shrink-0 ml-2">{s.notes}</Badge>}
                       </div>
                     )
                   })}

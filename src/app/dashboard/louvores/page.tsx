@@ -150,14 +150,14 @@ export default function LouvoresPage() {
           {filteredSongs.map((song) => (
             <Card key={song.id} className="group hover:border-primary transition-colors overflow-hidden relative bg-card cursor-pointer" onClick={() => handleViewSong(song)}>
               <CardHeader className="p-4 pb-0 flex flex-row items-start justify-between">
-                <div className="space-y-1">
-                  <CardTitle className="text-lg text-primary">{song.title}</CardTitle>
-                  <CardDescription>{song.artist}</CardDescription>
+                <div className="space-y-1 min-w-0">
+                  <CardTitle className="text-lg text-primary truncate">{song.title}</CardTitle>
+                  <CardDescription className="truncate">{song.artist}</CardDescription>
                 </div>
                 {isAdminOrHigher && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -180,9 +180,9 @@ export default function LouvoresPage() {
                 )}
               </CardHeader>
               <CardContent className="p-4 pt-4 flex items-center justify-between">
-                <div className="flex gap-2">
+                <div className="flex gap-2 min-w-0 overflow-hidden">
                   {song.notes && (
-                    <span className="text-xs font-bold bg-primary/10 text-primary px-2 py-1 rounded">Nota: {song.notes}</span>
+                    <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-1 rounded truncate">Nota: {song.notes}</span>
                   )}
                 </div>
                 <div className="flex gap-2">
@@ -201,7 +201,7 @@ export default function LouvoresPage() {
 
       {/* Diálogo de Formulário (Criar/Editar) */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-2xl bg-card h-[90vh] flex flex-col overflow-hidden">
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl bg-card h-[90vh] flex flex-col overflow-hidden">
           <DialogHeader className="shrink-0">
             <DialogTitle>{editingId ? "Editar Louvor" : "Cadastrar Novo Louvor"}</DialogTitle>
             <DialogDescription>Insira os detalhes e a letra da música.</DialogDescription>
@@ -264,39 +264,39 @@ export default function LouvoresPage() {
 
       {/* Diálogo de Visualização da Letra */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-        <DialogContent className="max-w-3xl h-[90vh] flex flex-col bg-card overflow-hidden">
+        <DialogContent className="max-w-[95vw] sm:max-w-3xl h-[90vh] flex flex-col bg-card overflow-hidden">
           <DialogHeader className="shrink-0">
             <div className="flex items-center gap-3">
-              <div className="bg-primary/10 p-2 rounded-lg">
+              <div className="bg-primary/10 p-2 rounded-lg shrink-0">
                 <FileText className="h-6 w-6 text-primary" />
               </div>
               <div className="min-w-0">
-                <DialogTitle className="text-2xl text-primary truncate">{viewingSong?.title}</DialogTitle>
-                <DialogDescription className="text-lg truncate">{viewingSong?.artist}</DialogDescription>
+                <DialogTitle className="text-xl sm:text-2xl text-primary truncate">{viewingSong?.title}</DialogTitle>
+                <DialogDescription className="text-base sm:text-lg truncate">{viewingSong?.artist}</DialogDescription>
               </div>
             </div>
           </DialogHeader>
           
-          <ScrollArea className="flex-1 my-4 rounded-md border p-6 bg-background/50 min-h-0">
+          <ScrollArea className="flex-1 my-4 rounded-md border p-4 sm:p-6 bg-background/50 min-h-0">
             <div className="space-y-6">
               {viewingSong?.notes && (
                 <div className="bg-muted px-3 py-1.5 rounded-md border text-sm font-bold w-fit">
                   Tom: {viewingSong.notes}
                 </div>
               )}
-              <div className="whitespace-pre-wrap font-body text-base md:text-lg leading-relaxed text-foreground">
+              <div className="whitespace-pre-wrap font-body text-base sm:text-lg leading-relaxed text-foreground">
                 {viewingSong?.lyrics || "Letra não cadastrada."}
               </div>
             </div>
           </ScrollArea>
 
-          <DialogFooter className="gap-2 pt-2 border-t shrink-0">
+          <DialogFooter className="gap-2 pt-2 border-t shrink-0 flex flex-col sm:flex-row">
             {isAdminOrHigher && (
-              <Button variant="outline" onClick={() => { setIsViewOpen(false); handleOpenEdit(viewingSong); }}>
+              <Button variant="outline" className="w-full sm:w-auto" onClick={() => { setIsViewOpen(false); handleOpenEdit(viewingSong); }}>
                 <Pencil className="mr-2 h-4 w-4" /> Editar
               </Button>
             )}
-            <Button onClick={() => setIsViewOpen(false)}>Fechar</Button>
+            <Button className="w-full sm:w-auto" onClick={() => setIsViewOpen(false)}>Fechar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

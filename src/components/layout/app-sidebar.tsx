@@ -32,6 +32,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
+  useSidebar,
 } from "@/components/ui/sidebar"
 
 const baseMenuItems = [
@@ -48,6 +49,7 @@ export function AppSidebar() {
   const auth = useAuth()
   const { user } = useUser()
   const firestore = useFirestore()
+  const { setOpenMobile } = useSidebar()
   
   const [theme, setTheme] = React.useState<"light" | "dark">("light")
 
@@ -79,7 +81,13 @@ export function AppSidebar() {
 
   const handleLogout = async () => {
     await signOut(auth)
+    setOpenMobile(false)
     router.push("/login")
+  }
+
+  const handleNavigation = (path: string) => {
+    router.push(path)
+    setOpenMobile(false)
   }
 
   const menuItems = [...baseMenuItems]
@@ -94,7 +102,7 @@ export function AppSidebar() {
       <SidebarHeader className="p-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" className="hover:bg-sidebar-accent" onClick={() => router.push("/")}>
+            <SidebarMenuButton size="lg" className="hover:bg-sidebar-accent" onClick={() => handleNavigation("/")}>
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                 <Music className="size-4" />
               </div>
@@ -117,7 +125,7 @@ export function AppSidebar() {
                 asChild
                 isActive={pathname === item.path}
                 tooltip={item.title}
-                onClick={() => router.push(item.path)}
+                onClick={() => handleNavigation(item.path)}
                 className="my-1 py-6"
               >
                 <button>

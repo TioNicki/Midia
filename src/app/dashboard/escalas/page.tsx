@@ -8,7 +8,7 @@ import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlo
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { CalendarDays, Plus, Trash2, Loader2, UserPlus, X, Pencil } from "lucide-react"
+import { CalendarDays, Plus, Trash2, Loader2, UserPlus, X, Pencil, Eye, Users } from "lucide-react"
 import { format } from "date-fns"
 import {
   Dialog,
@@ -56,6 +56,7 @@ export default function EscalasPage() {
   
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [viewingRoster, setViewingRoster] = useState<any | null>(null)
   const [idToDelete, setIdToDelete] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   
@@ -315,7 +316,7 @@ export default function EscalasPage() {
                   <TableHead>Data</TableHead>
                   <TableHead>Culto / Evento</TableHead>
                   <TableHead className="hidden md:table-cell">Equipe Escalada</TableHead>
-                  {isAdminOrHigher && <TableHead className="text-right">Ações</TableHead>}
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -340,33 +341,47 @@ export default function EscalasPage() {
                         )}
                       </div>
                     </TableCell>
-                    {isAdminOrHigher && (
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button 
-                            type="button"
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-primary hover:bg-primary/10"
-                            onClick={() => handleOpenEdit(escala)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            type="button"
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                            onClick={() => {
-                              setIdToDelete(escala.id)
-                              setIsDeleteDialogOpen(true)
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    )}
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        {/* Botão para celular ver detalhes */}
+                        <Button 
+                          type="button"
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-secondary md:hidden"
+                          onClick={() => setViewingRoster(escala)}
+                          title="Ver Equipe"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+
+                        {isAdminOrHigher && (
+                          <>
+                            <Button 
+                              type="button"
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-primary hover:bg-primary/10"
+                              onClick={() => handleOpenEdit(escala)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              type="button"
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                              onClick={() => {
+                                setIdToDelete(escala.id)
+                                setIsDeleteDialogOpen(true)
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
                 {!isLoading && sortedRosters.length === 0 && (
@@ -381,6 +396,39 @@ export default function EscalasPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Diálogo de Visualização da Equipe (Mobile) */}
+      <Dialog open={!!viewingRoster} onOpenChange={(open) => !open && setViewingRoster(null)}>
+        <DialogContent className="bg-card max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              Equipe Escalada
+            </DialogTitle>
+            <DialogDescription>
+              {viewingRoster?.description} • {viewingRoster?.date ? format(new Date(viewingRoster.date + 'T12:00:00'), 'dd/MM/yyyy') : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-4">
+            {viewingRoster?.assignments?.map((as: any, idx: number) => (
+              <div key={idx} className="flex items-center justify-between p-3 rounded-lg border bg-muted/20">
+                <span className="font-bold text-sm">{as.userName}</span>
+                <Badge variant="secondary" className="text-[10px] bg-secondary/10 text-secondary border-secondary/20">
+                  {as.roleName}
+                </Badge>
+              </div>
+            ))}
+            {(!viewingRoster?.assignments || viewingRoster.assignments.length === 0) && (
+              <p className="text-center text-muted-foreground italic text-sm py-4">
+                Nenhum membro escalado.
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setViewingRoster(null)} className="w-full">Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent className="bg-card">

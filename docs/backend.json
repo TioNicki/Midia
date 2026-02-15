@@ -103,6 +103,11 @@
               "roleName": { "type": "string" }
             }
           }
+        },
+        "songIds": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of song IDs associated with this service."
         }
       },
       "required": ["id", "date", "description"]

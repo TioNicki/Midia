@@ -118,7 +118,7 @@ export default function DashboardOverview() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
-          <Card key={stat.title} className="hover:shadow-md transition-shadow">
+          <Card key={stat.title} className="hover:shadow-md transition-shadow bg-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
               <stat.icon className={`h-4 w-4 ${stat.color}`} />
@@ -131,7 +131,7 @@ export default function DashboardOverview() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 bg-card">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Próximo Culto em Serviço</CardTitle>
@@ -166,7 +166,7 @@ export default function DashboardOverview() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {nextRoster.assignments?.map((as: any, idx: number) => (
-                    <div key={idx} className={`flex items-center gap-3 p-3 rounded-md border ${as.userId === user?.uid ? 'bg-primary/10 border-primary/30 ring-1 ring-primary/20' : 'bg-card border-border'}`}>
+                    <div key={idx} className={`flex items-center gap-3 p-3 rounded-md border ${as.userId === user?.uid ? 'bg-primary/10 border-primary/30 ring-1 ring-primary/20' : 'bg-background border-border'}`}>
                       <div className={`p-2 rounded-full ${as.userId === user?.uid ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'}`}>
                         <UserIcon className="h-4 w-4" />
                       </div>
@@ -182,6 +182,24 @@ export default function DashboardOverview() {
                     </p>
                   )}
                 </div>
+
+                {nextRoster.songIds?.length > 0 && (
+                  <div className="pt-4 border-t">
+                    <p className="text-xs font-bold text-muted-foreground uppercase mb-2 flex items-center gap-2">
+                      <Music className="h-3 w-3" /> Repertório do Dia
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {nextRoster.songIds.map((sid: string) => {
+                        const s = songs?.find(song => song.id === sid)
+                        return s ? (
+                          <Badge key={sid} variant="outline" className="text-[10px] font-normal">
+                            {s.title}
+                          </Badge>
+                        ) : null
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-center py-12 border-2 border-dashed rounded-lg">
@@ -194,7 +212,7 @@ export default function DashboardOverview() {
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-1">
+        <Card className="lg:col-span-1 bg-card">
           <CardHeader>
             <CardTitle>Louvores Recentes</CardTitle>
             <CardDescription>Músicas novas no banco</CardDescription>

@@ -8,7 +8,7 @@ import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlo
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, Search, MoreVertical, PlayCircle, Loader2, Trash2, Eye, Pencil, FileText } from "lucide-react"
+import { Plus, Search, MoreVertical, Loader2, Trash2, Eye, Pencil, FileText } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -16,7 +16,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import {
   AlertDialog,
@@ -202,62 +201,64 @@ export default function LouvoresPage() {
 
       {/* Diálogo de Formulário (Criar/Editar) */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-2xl bg-card">
+        <DialogContent className="max-w-2xl bg-card max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>{editingId ? "Editar Louvor" : "Cadastrar Novo Louvor"}</DialogTitle>
             <DialogDescription>Insira os detalhes e a letra da música.</DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSave} className="space-y-4 py-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <ScrollArea className="flex-1 pr-4">
+            <form onSubmit={handleSave} className="space-y-4 py-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Título da Música</Label>
+                  <Input 
+                    id="title" 
+                    placeholder="Ex: Oceans" 
+                    value={songData.title}
+                    onChange={(e) => setSongData({...songData, title: e.target.value})}
+                    className="bg-background"
+                    required 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="artist">Artista / Ministério</Label>
+                  <Input 
+                    id="artist" 
+                    placeholder="Ex: Hillsong United" 
+                    value={songData.artist}
+                    onChange={(e) => setSongData({...songData, artist: e.target.value})}
+                    className="bg-background"
+                    required 
+                  />
+                </div>
+              </div>
               <div className="space-y-2">
-                <Label htmlFor="title">Título da Música</Label>
+                <Label htmlFor="notes">Notas / Tom (Opcional)</Label>
                 <Input 
-                  id="title" 
-                  placeholder="Ex: Oceans" 
-                  value={songData.title}
-                  onChange={(e) => setSongData({...songData, title: e.target.value})}
+                  id="notes" 
+                  placeholder="Ex: Sol Maior (G)" 
+                  value={songData.notes}
+                  onChange={(e) => setSongData({...songData, notes: e.target.value})}
                   className="bg-background"
-                  required 
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="artist">Artista / Ministério</Label>
-                <Input 
-                  id="artist" 
-                  placeholder="Ex: Hillsong United" 
-                  value={songData.artist}
-                  onChange={(e) => setSongData({...songData, artist: e.target.value})}
-                  className="bg-background"
-                  required 
+                <Label htmlFor="lyrics">Letra Completa</Label>
+                <Textarea 
+                  id="lyrics" 
+                  placeholder="Cole a letra da música aqui..." 
+                  className="min-h-[350px] bg-background"
+                  value={songData.lyrics}
+                  onChange={(e) => setSongData({...songData, lyrics: e.target.value})}
                 />
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notas / Tom (Opcional)</Label>
-              <Input 
-                id="notes" 
-                placeholder="Ex: Sol Maior (G)" 
-                value={songData.notes}
-                onChange={(e) => setSongData({...songData, notes: e.target.value})}
-                className="bg-background"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lyrics">Letra Completa</Label>
-              <Textarea 
-                id="lyrics" 
-                placeholder="Cole a letra da música aqui..." 
-                className="min-h-[250px] bg-background"
-                value={songData.lyrics}
-                onChange={(e) => setSongData({...songData, lyrics: e.target.value})}
-              />
-            </div>
-            <DialogFooter>
-              <Button type="submit" className="w-full font-bold">
-                {editingId ? "Salvar Alterações" : "Cadastrar Música"}
-              </Button>
-            </DialogFooter>
-          </form>
+            </form>
+          </ScrollArea>
+          <DialogFooter className="pt-4 border-t">
+            <Button type="submit" onClick={handleSave} className="w-full font-bold">
+              {editingId ? "Salvar Alterações" : "Cadastrar Música"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -269,35 +270,33 @@ export default function LouvoresPage() {
               <div className="bg-primary/10 p-2 rounded-lg">
                 <FileText className="h-6 w-6 text-primary" />
               </div>
-              <div>
-                <DialogTitle className="text-2xl text-primary">{viewingSong?.title}</DialogTitle>
-                <DialogDescription className="text-lg">{viewingSong?.artist}</DialogDescription>
+              <div className="min-w-0">
+                <DialogTitle className="text-2xl text-primary truncate">{viewingSong?.title}</DialogTitle>
+                <DialogDescription className="text-lg truncate">{viewingSong?.artist}</DialogDescription>
               </div>
             </div>
           </DialogHeader>
           
-          <div className="flex-1 overflow-hidden py-4">
-            <div className="mb-4 flex gap-4">
-               {viewingSong?.notes && (
-                 <div className="bg-muted px-3 py-1 rounded-md border text-sm font-bold">
-                   Tom: {viewingSong.notes}
-                 </div>
-               )}
-            </div>
-            <ScrollArea className="h-full rounded-md border p-6 bg-background/50">
-              <pre className="whitespace-pre-wrap font-body text-base leading-relaxed text-foreground">
+          <ScrollArea className="flex-1 my-4 rounded-md border p-6 bg-background/50">
+            <div className="space-y-6">
+              {viewingSong?.notes && (
+                <div className="bg-muted px-3 py-1.5 rounded-md border text-sm font-bold w-fit">
+                  Tom: {viewingSong.notes}
+                </div>
+              )}
+              <pre className="whitespace-pre-wrap font-body text-base md:text-lg leading-relaxed text-foreground">
                 {viewingSong?.lyrics || "Letra não cadastrada."}
               </pre>
-            </ScrollArea>
-          </div>
+            </div>
+          </ScrollArea>
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2 pt-2 border-t">
             {isAdminOrHigher && (
               <Button variant="outline" onClick={() => { setIsViewOpen(false); handleOpenEdit(viewingSong); }}>
                 <Pencil className="mr-2 h-4 w-4" /> Editar
               </Button>
             )}
-            <Button onClick={() => setIsViewOpen(null)}>Fechar</Button>
+            <Button onClick={() => setIsViewOpen(false)}>Fechar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

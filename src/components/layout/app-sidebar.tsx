@@ -16,7 +16,6 @@ import {
   Briefcase,
   Sun,
   Moon,
-  Sparkles,
   Circle
 } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
@@ -40,7 +39,6 @@ const baseMenuItems = [
   { title: "Escalas", icon: CalendarDays, path: "/dashboard/escalas" },
   { title: "Louvores", icon: Music, path: "/dashboard/louvores" },
   { title: "Datas Importantes", icon: Bell, path: "/dashboard/eventos" },
-  { title: "Assistente IA", icon: Sparkles, path: "/dashboard/ia-assistente" },
   { title: "Feedback", icon: MessageSquare, path: "/dashboard/feedback" },
 ]
 

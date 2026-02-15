@@ -1,3 +1,4 @@
+
 # Atos Multimídia - Church Media Group
 
 Este é um sistema interno para gestão de grupos de mídia de igrejas, construído com NextJS e Firebase.
@@ -8,7 +9,6 @@ Este é um sistema interno para gestão de grupos de mídia de igrejas, constru�
 - **UI**: ShadCN UI + Tailwind CSS
 - **Autenticação**: Firebase Authentication
 - **Banco de Dados**: Cloud Firestore (NoSQL)
-- **IA**: Genkit (Google AI)
 
 ## 🗄️ Onde estão os dados?
 
@@ -26,7 +26,6 @@ Este projeto foi desenhado para operar permanentemente dentro do plano gratuito 
   - Leituras: 50.000/dia.
   - Escritas: 20.000/dia.
   - Armazenamento: 1 GB (Suficiente para anos de histórico de escalas e letras).
-- **IA (Genkit/Gemini)**: Limites de cota gratuita para geração de conteúdo criativo.
 
 *Nota: O sistema é "zero custo" para a igreja na escala atual e suporta crescimento sem necessidade de upgrade imediato.*
 

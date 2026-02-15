@@ -100,9 +100,6 @@ export default function DashboardLayout({
           <SidebarTrigger />
           <div className="flex flex-1 items-center justify-between">
             <h1 className="text-lg font-headline font-semibold text-primary">Atos Multimídia</h1>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              Dashboard / Painel Geral
-            </div>
           </div>
         </header>
         <main className="p-4 md:p-8">

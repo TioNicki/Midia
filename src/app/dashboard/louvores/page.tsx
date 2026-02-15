@@ -201,12 +201,12 @@ export default function LouvoresPage() {
 
       {/* Diálogo de Formulário (Criar/Editar) */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-2xl bg-card max-h-[90vh] flex flex-col">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl bg-card h-[90vh] flex flex-col overflow-hidden">
+          <DialogHeader className="shrink-0">
             <DialogTitle>{editingId ? "Editar Louvor" : "Cadastrar Novo Louvor"}</DialogTitle>
             <DialogDescription>Insira os detalhes e a letra da música.</DialogDescription>
           </DialogHeader>
-          <ScrollArea className="flex-1 pr-4">
+          <ScrollArea className="flex-1 pr-4 min-h-0">
             <form onSubmit={handleSave} className="space-y-4 py-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -254,7 +254,7 @@ export default function LouvoresPage() {
               </div>
             </form>
           </ScrollArea>
-          <DialogFooter className="pt-4 border-t">
+          <DialogFooter className="pt-4 border-t shrink-0">
             <Button type="submit" onClick={handleSave} className="w-full font-bold">
               {editingId ? "Salvar Alterações" : "Cadastrar Música"}
             </Button>
@@ -264,8 +264,8 @@ export default function LouvoresPage() {
 
       {/* Diálogo de Visualização da Letra */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col bg-card">
-          <DialogHeader>
+        <DialogContent className="max-w-3xl h-[90vh] flex flex-col bg-card overflow-hidden">
+          <DialogHeader className="shrink-0">
             <div className="flex items-center gap-3">
               <div className="bg-primary/10 p-2 rounded-lg">
                 <FileText className="h-6 w-6 text-primary" />
@@ -277,20 +277,20 @@ export default function LouvoresPage() {
             </div>
           </DialogHeader>
           
-          <ScrollArea className="flex-1 my-4 rounded-md border p-6 bg-background/50">
+          <ScrollArea className="flex-1 my-4 rounded-md border p-6 bg-background/50 min-h-0">
             <div className="space-y-6">
               {viewingSong?.notes && (
                 <div className="bg-muted px-3 py-1.5 rounded-md border text-sm font-bold w-fit">
                   Tom: {viewingSong.notes}
                 </div>
               )}
-              <pre className="whitespace-pre-wrap font-body text-base md:text-lg leading-relaxed text-foreground">
+              <div className="whitespace-pre-wrap font-body text-base md:text-lg leading-relaxed text-foreground">
                 {viewingSong?.lyrics || "Letra não cadastrada."}
-              </pre>
+              </div>
             </div>
           </ScrollArea>
 
-          <DialogFooter className="gap-2 pt-2 border-t">
+          <DialogFooter className="gap-2 pt-2 border-t shrink-0">
             {isAdminOrHigher && (
               <Button variant="outline" onClick={() => { setIsViewOpen(false); handleOpenEdit(viewingSong); }}>
                 <Pencil className="mr-2 h-4 w-4" /> Editar

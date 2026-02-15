@@ -308,12 +308,12 @@ export default function EscalasPage() {
 
       {/* Diálogo de Criar/Editar Escala */}
       <Dialog open={isCreateOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col bg-card">
-          <DialogHeader>
+        <DialogContent className="max-w-3xl h-[90vh] overflow-hidden flex flex-col bg-card">
+          <DialogHeader className="shrink-0">
             <DialogTitle>{editingId ? 'Editar Escala' : 'Nova Escala'}</DialogTitle>
             <DialogDescription>Preencha os dados, escale a equipe e selecione as músicas.</DialogDescription>
           </DialogHeader>
-          <ScrollArea className="flex-1 pr-4">
+          <ScrollArea className="flex-1 pr-4 min-h-0">
             <form onSubmit={handleSave} className="space-y-6 py-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -461,7 +461,7 @@ export default function EscalasPage() {
               <div className="h-4"></div>
             </form>
           </ScrollArea>
-          <DialogFooter className="pt-4 border-t">
+          <DialogFooter className="pt-4 border-t shrink-0">
             <Button type="button" variant="outline" onClick={handleCloseDialog}>Cancelar</Button>
             <Button type="submit" onClick={handleSave} className="font-bold">
               {editingId ? 'Salvar Alterações' : 'Publicar Escala'}
@@ -472,8 +472,8 @@ export default function EscalasPage() {
 
       {/* Diálogo de Visualização Detalhada */}
       <Dialog open={!!viewingRoster} onOpenChange={(open) => !open && setViewingRoster(null)}>
-        <DialogContent className="bg-card max-w-2xl max-h-[90vh] flex flex-col">
-          <DialogHeader>
+        <DialogContent className="bg-card max-w-2xl h-[90vh] flex flex-col overflow-hidden">
+          <DialogHeader className="shrink-0">
             <DialogTitle className="flex items-center gap-2 text-2xl">
               <CalendarDays className="h-6 w-6 text-primary" />
               {viewingRoster?.description}
@@ -482,7 +482,7 @@ export default function EscalasPage() {
               {viewingRoster?.date ? format(new Date(viewingRoster.date + 'T12:00:00'), 'dd/MM/yyyy') : ''}
             </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="flex-1 pr-4 py-4">
+          <ScrollArea className="flex-1 pr-4 py-4 min-h-0">
             <div className="space-y-6">
               <div className="space-y-3">
                 <h4 className="font-bold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
@@ -530,7 +530,7 @@ export default function EscalasPage() {
               </div>
             </div>
           </ScrollArea>
-          <DialogFooter className="pt-4 border-t">
+          <DialogFooter className="pt-4 border-t shrink-0">
             <Button onClick={() => setViewingRoster(null)} className="w-full">Fechar</Button>
           </DialogFooter>
         </DialogContent>

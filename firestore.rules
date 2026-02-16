@@ -28,10 +28,14 @@ service cloud.firestore {
       allow list: if isAdmin();
       allow create: if isSignedIn();
       
-      // Permitir que usuários atualizem seu próprio perfil (nome, etc), mas não seu cargo.
-      // Moderadores podem tudo em terceiros, exceto deletar a si mesmos.
+      // Moderadores podem tudo.
+      // Admins podem atualizar usuários (ex: status), mas NÃO podem alterar o cargo (role).
+      // Donos podem atualizar seus dados básicos, mas não cargo ou status.
       allow update: if isModerator() || 
-                   (isOwner(appUserId) && request.resource.data.role == resource.data.role);
+                   (isAdmin() && request.resource.data.role == resource.data.role) ||
+                   (isOwner(appUserId) && 
+                    request.resource.data.role == resource.data.role && 
+                    request.resource.data.status == resource.data.status);
       
       allow delete: if isModerator() && request.auth.uid != appUserId;
     }

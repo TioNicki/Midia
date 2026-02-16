@@ -55,7 +55,7 @@ export default function UsuariosPage() {
   if (!isMounted) return null
 
   const handleApprove = (userId: string) => {
-    if (!isModerator) return
+    if (!isAdminOrHigher) return
     const userRef = doc(firestore, 'app_users', userId)
     updateDocumentNonBlocking(userRef, { status: 'approved' })
     toast({ title: "Usuário aprovado", description: "O acesso foi liberado com sucesso." })
@@ -214,23 +214,26 @@ export default function UsuariosPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
+                        {/* Ações de Administrador ou Superior (Aprovar) */}
+                        {isAdminOrHigher && u.id !== currentUser?.uid && u.status === 'pending' && (
+                          <Button 
+                            type="button"
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-green-600 h-8 w-8 hover:bg-green-50" 
+                            onClick={(e) => {
+                              e.preventDefault()
+                              handleApprove(u.id)
+                            }}
+                            title="Aprovar Usuário"
+                          >
+                            <UserCheck className="h-4 w-4" />
+                          </Button>
+                        )}
+
+                        {/* Ações Exclusivas de Moderador (Cargos e Exclusão) */}
                         {isModerator && u.id !== currentUser?.uid && (
                           <>
-                            {u.status === 'pending' && (
-                              <Button 
-                                type="button"
-                                variant="ghost" 
-                                size="icon" 
-                                className="text-green-600 h-8 w-8 hover:bg-green-50" 
-                                onClick={(e) => {
-                                  e.preventDefault()
-                                  handleApprove(u.id)
-                                }}
-                                title="Aprovar Usuário"
-                              >
-                                <UserCheck className="h-4 w-4" />
-                              </Button>
-                            )}
                             <Button 
                               type="button"
                               variant="ghost" 
@@ -259,7 +262,7 @@ export default function UsuariosPage() {
                             </Button>
                           </>
                         )}
-                        {!isModerator && u.id !== currentUser?.uid && (
+                        {!isModerator && u.id !== currentUser?.uid && u.status === 'approved' && (
                           <span className="text-xs text-muted-foreground italic">Somente Leitura</span>
                         )}
                         {u.id === currentUser?.uid && (

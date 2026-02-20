@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
+import { formatShortName } from "@/lib/utils"
 
 export default function DashboardOverview() {
   const firestore = useFirestore()
@@ -51,7 +52,6 @@ export default function DashboardOverview() {
     )
   }
 
-  // Pegar a escala mais próxima (ordenada por data)
   const sortedRosters = rosters ? [...rosters].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()) : []
   const now = new Date()
   const nextRoster = sortedRosters.find(r => new Date(r.date + 'T23:59:59') >= now) || sortedRosters[0]
@@ -89,7 +89,7 @@ export default function DashboardOverview() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-headline font-bold text-primary">Olá, {profile?.name || user?.email?.split('@')[0]}!</h2>
+          <h2 className="text-3xl font-headline font-bold text-primary">Olá, {formatShortName(profile?.name || user?.email?.split('@')[0])}!</h2>
           <p className="text-muted-foreground">Bem-vindo ao painel do Atos Multimídia.</p>
         </div>
         {isAdminOrHigher && (
@@ -171,7 +171,7 @@ export default function DashboardOverview() {
                         <UserIcon className="h-4 w-4" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-bold truncate text-foreground">{as.userName}</p>
+                        <p className="text-sm font-bold truncate text-foreground">{formatShortName(as.userName)}</p>
                         <Badge variant="secondary" className="text-[10px] py-0 bg-secondary/10 text-secondary border-secondary/20">{as.roleName}</Badge>
                       </div>
                     </div>

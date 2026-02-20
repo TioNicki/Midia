@@ -33,6 +33,11 @@
           "type": "string",
           "description": "The approval status of the user ('pending', 'approved').",
           "enum": ["pending", "approved"]
+        },
+        "lastProfileUpdate": {
+          "type": "string",
+          "description": "ISO timestamp of the last time the user updated their profile name.",
+          "format": "date-time"
         }
       },
       "required": [

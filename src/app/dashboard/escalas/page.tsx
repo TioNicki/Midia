@@ -40,6 +40,7 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { formatShortName } from "@/lib/utils"
 
 interface Assignment {
   userId: string;
@@ -390,7 +391,7 @@ export default function EscalasPage() {
                   {assignments.map((as, idx) => (
                     <div key={idx} className="flex items-center justify-between bg-background p-2 rounded border text-sm">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-bold truncate">{as.userName}</span>
+                        <span className="font-bold truncate">{formatShortName(as.userName)}</span>
                         <span className="text-muted-foreground">→</span>
                         <Badge variant="secondary" className="bg-secondary/10 text-secondary border-secondary/20 truncate">{as.roleName}</Badge>
                       </div>
@@ -490,7 +491,7 @@ export default function EscalasPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {viewingRoster?.assignments?.map((as: any, idx: number) => (
                     <div key={idx} className="flex items-center justify-between p-3 rounded-lg border bg-muted/20">
-                      <span className="font-bold text-sm truncate mr-2">{as.userName}</span>
+                      <span className="font-bold text-sm truncate mr-2">{formatShortName(as.userName)}</span>
                       <Badge variant="secondary" className="text-[10px] bg-secondary/10 text-secondary border-secondary/20 shrink-0">
                         {as.roleName}
                       </Badge>

@@ -28,11 +28,13 @@ service cloud.firestore {
       allow list: if isAdmin();
       allow create: if isSignedIn();
       
-      // Moderadores podem tudo.
-      // Admins podem atualizar usuários (ex: status), mas NÃO podem alterar o cargo (role).
-      // Donos podem atualizar seus dados básicos, mas não cargo ou status.
+      // Moderadores podem atualizar qualquer campo.
+      // Admins podem atualizar usuários (ex: status), mas não podem alterar o cargo (role) nem mexer em moderadores.
+      // Donos podem atualizar seus dados básicos (nome/email), mas não cargo ou status.
       allow update: if isModerator() || 
-                   (isAdmin() && request.resource.data.role == resource.data.role) ||
+                   (isAdmin() && 
+                    request.resource.data.role == resource.data.role && 
+                    resource.data.role != 'moderator') ||
                    (isOwner(appUserId) && 
                     request.resource.data.role == resource.data.role && 
                     request.resource.data.status == resource.data.status);

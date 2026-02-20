@@ -43,6 +43,7 @@ export default function UsuariosPage() {
     [firestore, currentUser]
   )
   const { data: profile } = useDoc(userProfileRef)
+  
   const isModerator = profile?.role === 'moderator'
   const isAdminOrHigher = profile?.role === 'admin' || profile?.role === 'moderator'
 

@@ -19,7 +19,8 @@ import {
   Circle,
   Pencil,
   Loader2,
-  Lock
+  Lock,
+  ArrowLeftRight
 } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
@@ -177,6 +178,7 @@ export function AppSidebar() {
   const menuItems = [...baseMenuItems]
   
   if (isAdminOrHigher) {
+    menuItems.push({ title: "Trocas", icon: ArrowLeftRight, path: "/dashboard/trocas" })
     menuItems.push({ title: "Usuários", icon: Users, path: "/dashboard/usuarios" })
     menuItems.push({ title: "Funções", icon: Briefcase, path: "/dashboard/funcoes" })
   }

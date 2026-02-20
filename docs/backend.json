@@ -105,7 +105,8 @@
               "userId": { "type": "string" },
               "userName": { "type": "string" },
               "roleId": { "type": "string" },
-              "roleName": { "type": "string" }
+              "roleName": { "type": "string" },
+              "status": { "type": "string", "enum": ["pending", "confirmed", "swap_requested"] }
             }
           }
         },
@@ -116,6 +117,26 @@
         }
       },
       "required": ["id", "date", "description"]
+    },
+    "SwapRequest": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SwapRequest",
+      "type": "object",
+      "description": "Represents a request from a member to swap their duty for another date.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "originalRosterId": { "type": "string" },
+        "originalRosterDate": { "type": "string" },
+        "targetRosterId": { "type": "string" },
+        "targetRosterDesc": { "type": "string" },
+        "roleId": { "type": "string" },
+        "roleName": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "originalRosterId", "targetRosterId", "status"]
     },
     "ImportantDate": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -165,6 +186,10 @@
     "/duty_rosters/{dutyRosterId}": {
       "schema": "#/backend/entities/DutyRoster",
       "description": "Service schedules."
+    },
+    "/swap_requests/{requestId}": {
+      "schema": "#/backend/entities/SwapRequest",
+      "description": "Duty swap requests."
     },
     "/important_dates/{importantDateId}": {
       "schema": "#/backend/entities/ImportantDate",

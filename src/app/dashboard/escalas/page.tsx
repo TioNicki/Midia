@@ -101,6 +101,18 @@ export default function EscalasPage() {
 
   if (!isMounted) return null
 
+  // Helper for safe date formatting
+  const safeFormatDate = (dateStr: string | undefined, formatStr: string) => {
+    if (!dateStr) return '--/--'
+    try {
+      const date = new Date(dateStr.includes('T') ? dateStr : `${dateStr}T12:00:00`)
+      if (isNaN(date.getTime())) return '--/--'
+      return format(date, formatStr)
+    } catch {
+      return '--/--'
+    }
+  }
+
   const handleAddAssignment = () => {
     if (!currentAssignment.userId || !currentAssignment.roleId) {
       toast({ variant: "destructive", title: "Campos obrigatórios", description: "Selecione um membro e uma função." })
@@ -197,6 +209,7 @@ export default function EscalasPage() {
   }
 
   const handleConfirmPresence = (roster: any) => {
+    if (!roster?.assignments || !user?.uid) return;
     const newAssignments = roster.assignments.map((as: Assignment) => 
       as.userId === user?.uid ? { ...as, status: 'confirmed' } : as
     )
@@ -211,7 +224,7 @@ export default function EscalasPage() {
   }
 
   const handleRequestSwap = () => {
-    if (!swapTargetRosterId) {
+    if (!swapTargetRosterId || !swapOriginalRoster?.assignments) {
       toast({ variant: "destructive", title: "Erro", description: "Selecione o culto de destino." })
       return
     }
@@ -219,13 +232,18 @@ export default function EscalasPage() {
     const targetRoster = rosters?.find(r => r.id === swapTargetRosterId)
     const userAssignment = swapOriginalRoster.assignments.find((as: Assignment) => as.userId === user?.uid)
 
+    if (!userAssignment) {
+      toast({ variant: "destructive", title: "Erro", description: "Você não faz parte desta escala." })
+      return
+    }
+
     const swapRequest = {
       userId: user?.uid,
-      userName: profile?.name || user?.displayName,
+      userName: profile?.name || user?.displayName || user?.email || "Voluntário",
       originalRosterId: swapOriginalRoster.id,
       originalRosterDate: swapOriginalRoster.date,
       targetRosterId: swapTargetRosterId,
-      targetRosterDesc: targetRoster?.description,
+      targetRosterDesc: targetRoster?.description || "Novo Culto",
       roleId: userAssignment.roleId,
       roleName: userAssignment.roleName,
       status: 'pending',
@@ -300,7 +318,7 @@ export default function EscalasPage() {
                       <TableCell className="font-medium px-4">
                         <div className="flex items-center gap-2 whitespace-nowrap">
                           <CalendarDays className="h-4 w-4 text-muted-foreground hidden sm:inline" />
-                          {escala.date ? format(new Date(escala.date + 'T12:00:00'), 'dd/MM') : '--/--'}
+                          {safeFormatDate(escala.date, 'dd/MM')}
                         </div>
                       </TableCell>
                       <TableCell className="max-w-[150px] truncate">{escala.description}</TableCell>
@@ -570,7 +588,7 @@ export default function EscalasPage() {
               {viewingRoster?.description}
             </DialogTitle>
             <DialogDescription className="text-base sm:text-lg">
-              {viewingRoster?.date ? format(new Date(viewingRoster.date + 'T12:00:00'), 'dd/MM/yyyy') : ''}
+              {safeFormatDate(viewingRoster?.date, 'dd/MM/yyyy')}
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="flex-1 pr-4 py-4 min-h-0">
@@ -644,7 +662,7 @@ export default function EscalasPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="p-3 bg-muted/30 rounded-lg border text-sm">
-              <p><strong>De:</strong> {swapOriginalRoster?.description} ({swapOriginalRoster?.date ? format(new Date(swapOriginalRoster.date + 'T12:00:00'), 'dd/MM') : ''})</p>
+              <p><strong>De:</strong> {swapOriginalRoster?.description} ({safeFormatDate(swapOriginalRoster?.date, 'dd/MM')})</p>
               <p><strong>Minha Função:</strong> {swapOriginalRoster?.assignments?.find((a: Assignment) => a.userId === user?.uid)?.roleName}</p>
             </div>
             
@@ -659,7 +677,7 @@ export default function EscalasPage() {
                     .filter(r => r.id !== swapOriginalRoster?.id)
                     .map(r => (
                       <SelectItem key={r.id} value={r.id}>
-                        {format(new Date(r.date + 'T12:00:00'), 'dd/MM')} - {r.description}
+                        {safeFormatDate(r.date, 'dd/MM')} - {r.description}
                       </SelectItem>
                     ))
                   }

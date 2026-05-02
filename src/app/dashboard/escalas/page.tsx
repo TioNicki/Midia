@@ -3,12 +3,12 @@
 
 import { useState, useEffect } from "react"
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
-import { collection, doc, query, where, serverTimestamp } from "firebase/firestore"
+import { collection, doc, query, where } from "firebase/firestore"
 import { addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { CalendarDays, Plus, Trash2, Loader2, UserPlus, X, Pencil, Eye, Users, Music, Check, ArrowLeftRight, Clock, AlertTriangle, MessageSquare } from "lucide-react"
+import { CalendarDays, Plus, Trash2, Loader2, X, Pencil, Users, Music, Check, ArrowLeftRight, Clock } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -64,7 +64,7 @@ export default function EscalasPage() {
   const rostersQuery = useMemoFirebase(() => groupId ? query(collection(firestore, 'duty_rosters'), where('groupId', '==', groupId)) : null, [firestore, groupId])
   const { data: rosters, isLoading } = useCollection(rostersQuery)
 
-  // Filter rosters where current user is assigned
+  // Filter rosters where current user is assigned (for all roles)
   const myAssignments = rosters?.filter(r => 
     r.assignments?.some((as: any) => as.userId === user?.uid)
   ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) || []
@@ -183,7 +183,6 @@ export default function EscalasPage() {
 
     addDocumentNonBlocking(collection(firestore, 'swap_requests'), swapRequest)
 
-    // Update assignment status in roster to show requested
     const newAssignments = originalRoster.assignments.map((as: any) => 
       as.userId === user.uid ? { ...as, status: 'swap_requested' } : as
     )
@@ -229,7 +228,7 @@ export default function EscalasPage() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-headline font-bold text-primary">Escalas de Mídia</h2>
-          <p className="text-muted-foreground">Gerenciamento de voluntários por culto ou evento.</p>
+          <p className="text-muted-foreground">Gerenciamento e acompanhamento dos voluntários.</p>
         </div>
         {isAdminOrHigher && (
           <Button onClick={() => setIsCreateOpen(true)} className="font-bold">
@@ -238,41 +237,41 @@ export default function EscalasPage() {
         )}
       </div>
 
-      {/* Seção do Usuário: Minhas Próximas Atribuições */}
+      {/* Seção de Atribuições (Visível para Membros, Admins e Moderadores que estão escalados) */}
       {myAssignments.length > 0 && (
         <div className="space-y-4">
           <h3 className="text-xl font-bold flex items-center gap-2">
             <Badge className="bg-primary/10 text-primary hover:bg-primary/20 p-1 rounded-full"><Users className="h-4 w-4" /></Badge>
             Suas Próximas Atribuições
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {myAssignments.map((roster) => {
               const myRole = roster.assignments.find((as: any) => as.userId === user?.uid)
               return (
-                <Card key={roster.id} className="border-l-4 border-l-primary overflow-hidden">
+                <Card key={roster.id} className="border-l-4 border-l-primary shadow-sm hover:shadow-md transition-shadow">
                   <CardContent className="p-5">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <p className="text-xs font-bold text-primary uppercase tracking-wider">{myRole?.roleName}</p>
-                        <h4 className="text-lg font-bold">{roster.description}</h4>
-                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-bold text-primary uppercase tracking-wider truncate">{myRole?.roleName}</p>
+                        <h4 className="text-base font-bold truncate">{roster.description}</h4>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
                           <Clock className="h-3 w-3" /> {format(new Date(roster.date + 'T12:00:00'), "EEEE, dd 'de' MMMM", { locale: ptBR })}
                         </p>
                       </div>
-                      <Badge variant={myRole?.status === 'confirmed' ? 'default' : myRole?.status === 'swap_requested' ? 'destructive' : 'outline'}>
-                        {myRole?.status === 'confirmed' ? 'Confirmado' : myRole?.status === 'swap_requested' ? 'Troca Solicitada' : 'Pendente'}
+                      <Badge variant={myRole?.status === 'confirmed' ? 'default' : myRole?.status === 'swap_requested' ? 'destructive' : 'outline'} className="text-[10px]">
+                        {myRole?.status === 'confirmed' ? 'Confirmado' : myRole?.status === 'swap_requested' ? 'Troca Pedida' : 'Pendente'}
                       </Badge>
                     </div>
                     
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 mt-4">
                       {myRole?.status === 'pending' && (
-                        <Button size="sm" className="flex-1 font-bold" onClick={() => handleConfirmPresence(roster.id)}>
-                          <Check className="mr-2 h-4 w-4" /> Confirmar
+                        <Button size="sm" className="flex-1 font-bold h-8 text-xs" onClick={() => handleConfirmPresence(roster.id)}>
+                          <Check className="mr-1 h-3 w-3" /> Confirmar
                         </Button>
                       )}
                       {myRole?.status !== 'swap_requested' && (
-                        <Button size="sm" variant="outline" className="flex-1" onClick={() => handleOpenSwap(roster.id)}>
-                          <ArrowLeftRight className="mr-2 h-4 w-4" /> Solicitar Troca
+                        <Button size="sm" variant="outline" className="flex-1 h-8 text-xs" onClick={() => handleOpenSwap(roster.id)}>
+                          <ArrowLeftRight className="mr-1 h-3 w-3" /> Solicitar Troca
                         </Button>
                       )}
                     </div>
@@ -284,70 +283,68 @@ export default function EscalasPage() {
         </div>
       )}
 
-      {/* Tabela Geral de Escalas */}
-      <Card>
-        <CardHeader>
+      {/* Tabela de Escalas */}
+      <Card className="border-none shadow-md overflow-hidden">
+        <CardHeader className="bg-muted/30 pb-4">
           <CardTitle className="text-lg flex items-center gap-2">
-            <CalendarDays className="h-5 w-5 text-primary" /> Todas as Escalas
+            <CalendarDays className="h-5 w-5 text-primary" /> Planejamento Geral
           </CardTitle>
-          <CardDescription>Visualização completa do planejamento do grupo.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {isLoading ? (
             <div className="flex justify-center p-12"><Loader2 className="animate-spin text-primary" /></div>
           ) : (
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-muted/20">
                 <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Culto / Evento</TableHead>
+                  <TableHead className="w-[120px]">Data</TableHead>
+                  <TableHead>Evento</TableHead>
                   <TableHead>Equipe</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead className="text-right w-[100px]">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {rosters?.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(roster => (
-                  <TableRow key={roster.id}>
-                    <TableCell className="font-medium">
+                  <TableRow key={roster.id} className="hover:bg-muted/10">
+                    <TableCell className="font-medium text-xs">
                       {format(new Date(roster.date + 'T12:00:00'), 'dd/MM/yyyy')}
                     </TableCell>
-                    <TableCell>{roster.description}</TableCell>
+                    <TableCell className="text-sm font-semibold">{roster.description}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {roster.assignments?.map((as: any, i: number) => (
-                          <Badge key={i} variant="outline" className={`text-[9px] px-1.5 h-5 flex gap-1 items-center ${as.status === 'confirmed' ? 'border-green-500 text-green-600 bg-green-50' : as.status === 'swap_requested' ? 'border-red-500 text-red-600 bg-red-50' : ''}`}>
+                          <Badge key={i} variant="outline" className={`text-[9px] px-1.5 h-5 flex gap-1 items-center font-normal ${as.status === 'confirmed' ? 'border-green-500 text-green-600 bg-green-50' : as.status === 'swap_requested' ? 'border-red-500 text-red-600 bg-red-50' : ''}`}>
                             {as.status === 'confirmed' && <Check className="h-2 w-2" />}
                             {as.status === 'swap_requested' && <ArrowLeftRight className="h-2 w-2" />}
-                            {formatShortName(as.userName)} ({as.roleName})
+                            {formatShortName(as.userName)} <span className="opacity-50 text-[8px]">({as.roleName})</span>
                           </Badge>
                         ))}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        {isAdminOrHigher && (
-                          <>
-                            <Button variant="ghost" size="icon" onClick={() => openEdit(roster)} title="Editar Escala">
-                              <Pencil className="h-4 w-4 text-primary" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              onClick={() => { setIdToDelete(roster.id); setIsDeleteDialogOpen(true); }}
-                              title="Excluir Escala"
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </>
-                        )}
-                      </div>
+                      {isAdminOrHigher && (
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(roster)} title="Editar">
+                            <Pencil className="h-3.5 w-3.5 text-primary" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8" 
+                            onClick={() => { setIdToDelete(roster.id); setIsDeleteDialogOpen(true); }}
+                            title="Excluir"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          </Button>
+                        </div>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
                 {!isLoading && rosters?.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-10 text-muted-foreground italic">
-                      Nenhuma escala cadastrada.
+                    <TableCell colSpan={4} className="text-center py-12 text-muted-foreground italic text-sm">
+                      Nenhuma escala futura agendada.
                     </TableCell>
                   </TableRow>
                 )}
@@ -357,18 +354,18 @@ export default function EscalasPage() {
         </CardContent>
       </Card>
 
-      {/* Diálogo de Troca de Escala */}
+      {/* Diálogo de Troca */}
       <Dialog open={isSwapOpen} onOpenChange={setIsSwapOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <ArrowLeftRight className="h-5 w-5 text-primary" /> Solicitar Troca de Escala
+              <ArrowLeftRight className="h-5 w-5 text-primary" /> Solicitar Troca
             </DialogTitle>
             <DialogDescription>Escolha outra escala para a qual deseja ser movido.</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleRequestSwap} className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Mudar para qual Escala / Data?</Label>
+              <Label>Mudar para qual Escala?</Label>
               <Select value={swapData.targetRosterId} onValueChange={(val) => setSwapData({...swapData, targetRosterId: val})}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o destino..." />
@@ -383,9 +380,9 @@ export default function EscalasPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Motivo (Opcional)</Label>
+              <Label>Motivo</Label>
               <Textarea 
-                placeholder="Ex: Terei um compromisso familiar inadiável..."
+                placeholder="Ex: Terei um compromisso..."
                 value={swapData.reason}
                 onChange={(e) => setSwapData({...swapData, reason: e.target.value})}
               />
@@ -404,9 +401,8 @@ export default function EscalasPage() {
           <DialogHeader className="shrink-0">
             <DialogTitle className="text-2xl text-primary flex items-center gap-2">
               <CalendarDays className="h-6 w-6" />
-              {editingId ? 'Editar' : 'Nova'} Escala de Mídia
+              {editingId ? 'Editar' : 'Nova'} Escala
             </DialogTitle>
-            <DialogDescription>Preencha os dados e selecione a equipe para o evento.</DialogDescription>
           </DialogHeader>
 
           <ScrollArea className="flex-1 pr-4">
@@ -419,17 +415,15 @@ export default function EscalasPage() {
                     value={newRoster.date} 
                     onChange={e => setNewRoster({...newRoster, date: e.target.value})} 
                     required 
-                    className="bg-background"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Descrição / Nome do Culto</Label>
+                  <Label>Nome do Culto / Evento</Label>
                   <Input 
-                    placeholder="Ex: Culto da Família"
+                    placeholder="Ex: Culto de Domingo"
                     value={newRoster.description} 
                     onChange={e => setNewRoster({...newRoster, description: e.target.value})} 
                     required 
-                    className="bg-background"
                   />
                 </div>
               </div>
@@ -437,16 +431,16 @@ export default function EscalasPage() {
               <Card className="border-dashed border-primary/20 bg-primary/5">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <Users className="h-5 w-5" /> Montar Equipe
+                    <Users className="h-5 w-5" /> Escalar Equipe
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-7 gap-3 items-end">
                     <div className="sm:col-span-3 space-y-2">
                       <Label className="text-xs">Voluntário</Label>
-                      <Select value={currentMemberId} onValueChange={setCurrentMemberId}>
-                        <SelectTrigger className="bg-background">
-                          <SelectValue placeholder="Selecione o membro..." />
+                      <Select value={currentMemberId} onValueChange={currentMemberId => setCurrentMemberId(currentMemberId)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione..." />
                         </SelectTrigger>
                         <SelectContent>
                           {approvedUsers.map(u => (
@@ -457,9 +451,9 @@ export default function EscalasPage() {
                     </div>
                     <div className="sm:col-span-3 space-y-2">
                       <Label className="text-xs">Função</Label>
-                      <Select value={currentRoleId} onValueChange={setCurrentRoleId}>
-                        <SelectTrigger className="bg-background">
-                          <SelectValue placeholder="Selecione a função..." />
+                      <Select value={currentRoleId} onValueChange={currentRoleId => setCurrentRoleId(currentRoleId)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione..." />
                         </SelectTrigger>
                         <SelectContent>
                           {roles?.map(r => (
@@ -474,27 +468,22 @@ export default function EscalasPage() {
                   </div>
 
                   <div className="space-y-2 mt-4">
-                    <Label className="text-xs uppercase font-bold text-muted-foreground">Membros Escalados</Label>
-                    {assignments.length === 0 ? (
-                      <div className="text-center p-6 border-2 border-dashed rounded-lg text-muted-foreground text-xs">
-                        Ninguém escalado ainda.
-                      </div>
-                    ) : (
+                    {assignments.length > 0 && (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {assignments.map((as, idx) => (
-                          <div key={idx} className="flex items-center justify-between p-3 border rounded-lg bg-background group">
+                          <div key={idx} className="flex items-center justify-between p-2 border rounded-md bg-background group">
                             <div className="flex flex-col">
-                              <span className="font-bold text-sm">{formatShortName(as.userName)}</span>
-                              <span className="text-[10px] text-primary uppercase font-medium">{as.roleName}</span>
+                              <span className="font-bold text-xs">{formatShortName(as.userName)}</span>
+                              <span className="text-[9px] text-primary uppercase font-bold">{as.roleName}</span>
                             </div>
                             <Button 
                               type="button" 
                               variant="ghost" 
                               size="icon" 
-                              className="h-8 w-8 text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="h-7 w-7 text-destructive"
                               onClick={() => removeAssignment(idx)}
                             >
-                              <X className="h-4 w-4" />
+                              <X className="h-3 w-3" />
                             </Button>
                           </div>
                         ))}
@@ -506,13 +495,13 @@ export default function EscalasPage() {
 
               <div className="space-y-4">
                 <h3 className="text-lg font-bold flex items-center gap-2">
-                  <Music className="h-5 w-5 text-primary" /> Repertório (Louvores)
+                  <Music className="h-5 w-5 text-primary" /> Repertório
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   {songs?.map(song => (
                     <div 
                       key={song.id} 
-                      className={`flex items-center space-x-2 p-3 rounded-lg border transition-colors cursor-pointer ${
+                      className={`flex items-center space-x-2 p-3 rounded-md border transition-colors cursor-pointer ${
                         selectedSongIds.includes(song.id) ? 'bg-primary/10 border-primary' : 'bg-background hover:bg-muted'
                       }`}
                       onClick={() => toggleSong(song.id)}
@@ -520,10 +509,9 @@ export default function EscalasPage() {
                       <Checkbox 
                         checked={selectedSongIds.includes(song.id)}
                         onCheckedChange={() => toggleSong(song.id)}
-                        className="pointer-events-none"
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold truncate">{song.title}</p>
+                        <p className="text-xs font-bold truncate">{song.title}</p>
                         <p className="text-[10px] text-muted-foreground truncate">{song.artist}</p>
                       </div>
                     </div>
@@ -536,7 +524,7 @@ export default function EscalasPage() {
           <DialogFooter className="shrink-0 border-t pt-4">
             <Button variant="outline" onClick={closeDialog}>Cancelar</Button>
             <Button onClick={handleSave} className="font-bold">
-              {editingId ? 'Atualizar' : 'Salvar'} Escala
+              {editingId ? 'Atualizar' : 'Salvar'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -547,13 +535,13 @@ export default function EscalasPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir Escala?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação removerá permanentemente esta escala. Os membros deixarão de receber notificações sobre este evento.
+              Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Voltar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Confirmar Exclusão
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
+              Confirmar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

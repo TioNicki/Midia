@@ -62,14 +62,21 @@ export default function LoginPage() {
 
     try {
       // 1. Validar Código de Convite de forma estrita
-      const q = query(collection(firestore, 'media_groups'), where('inviteCode', '==', cleanCode))
+      const groupsRef = collection(firestore, 'media_groups')
+      const q = query(groupsRef, where('inviteCode', '==', cleanCode))
       const snap = await getDocs(q)
       
       if (snap.empty) {
-        throw new Error("Código de convite inválido ou não encontrado. Verifique com seu coordenador.")
+        setLoading(false)
+        toast({ 
+          variant: "destructive", 
+          title: "Código Inválido", 
+          description: "O código informado não existe. Verifique com seu coordenador." 
+        })
+        return
       }
       
-      const targetGroup = snap.docs[0].data()
+      const groupData = snap.docs[0].data()
       const groupId = snap.docs[0].id
 
       // 2. Criar Usuário no Firebase Auth
@@ -91,11 +98,21 @@ export default function LoginPage() {
 
       toast({ 
         title: "Solicitação enviada!", 
-        description: `Você foi vinculado ao grupo ${targetGroup.name}. Aguarde a aprovação.` 
+        description: `Você foi vinculado ao grupo ${groupData.name}. Aguarde a aprovação.` 
       })
-      router.push("/dashboard")
+      
+      // Forçamos um pequeno delay para garantir que o Firestore processou antes do redirect
+      setTimeout(() => {
+        router.push("/dashboard")
+      }, 500)
+
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Erro no cadastro", description: error.message })
+      console.error("Erro no cadastro:", error)
+      let message = "Ocorreu um erro ao processar seu cadastro."
+      if (error.code === 'auth/email-already-in-use') message = "Este e-mail já está em uso."
+      if (error.code === 'auth/weak-password') message = "A senha deve ter no mínimo 6 caracteres."
+      
+      toast({ variant: "destructive", title: "Erro no cadastro", description: message })
       setLoading(false)
     }
   }
@@ -110,17 +127,18 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-      const uid = userCredential.user.uid
-      await updateProfile(userCredential.user, { displayName: name })
-
       // Gerar código baseado no primeiro nome do grupo
-      const firstWord = churchName.trim().split(/\s+/)[0].toUpperCase()
+      const firstWord = churchName.trim().split(/\s+/)[0].toUpperCase().replace(/[^A-Z0-9]/g, '')
       const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase()
       
       // Caso especial para Atos Multimídia principal
       const isMainAtos = churchName.toLowerCase().includes("atos") && churchName.toLowerCase().includes("multimídia")
       const generatedCode = isMainAtos ? "ATOS-SM05" : `${firstWord}-${randomSuffix}`
+
+      // Criar usuário antes para ter o UID
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+      const uid = userCredential.user.uid
+      await updateProfile(userCredential.user, { displayName: name })
       
       const groupsRef = collection(firestore, 'media_groups')
       const newGroupDoc = doc(groupsRef)
@@ -148,6 +166,7 @@ export default function LoginPage() {
       toast({ title: "Grupo criado com sucesso!", description: `Seu código de convite é: ${generatedCode}` })
       router.push("/dashboard")
     } catch (error: any) {
+      console.error("Erro ao criar grupo:", error)
       toast({ variant: "destructive", title: "Erro ao criar grupo", description: error.message })
       setLoading(false)
     }

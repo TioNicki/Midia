@@ -17,9 +17,11 @@ export default function DashboardOverview() {
   const { user } = useUser()
   const router = useRouter()
   const [isMounted, setIsMounted] = useState(false)
+  const [now, setNow] = useState<Date | null>(null)
 
   useEffect(() => {
     setIsMounted(true)
+    setNow(new Date())
   }, [])
 
   const userProfileRef = useMemoFirebase(() => 
@@ -44,7 +46,7 @@ export default function DashboardOverview() {
   )
   const { data: feedbacks } = useCollection(feedbacksRef)
 
-  if (!isMounted || isProfileLoading) {
+  if (!isMounted || isProfileLoading || !now) {
     return (
       <div className="flex h-full items-center justify-center p-20">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -53,8 +55,12 @@ export default function DashboardOverview() {
   }
 
   const sortedRosters = rosters ? [...rosters].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()) : []
-  const now = new Date()
-  const nextRoster = sortedRosters.find(r => new Date(r.date + 'T23:59:59') >= now) || sortedRosters[0]
+  
+  // Encontra o próximo culto a partir de hoje
+  const nextRoster = sortedRosters.find(r => {
+    const rosterDate = new Date(r.date + 'T23:59:59')
+    return rosterDate >= now
+  }) || sortedRosters[0]
 
   const isUserEscalated = nextRoster?.assignments?.some((as: any) => as.userId === user?.uid)
 

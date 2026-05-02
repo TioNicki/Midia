@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -105,6 +106,7 @@ export default function EscalasPage() {
   const safeFormatDate = (dateStr: string | undefined, formatStr: string) => {
     if (!dateStr) return '--/--'
     try {
+      // Normaliza para o meio do dia para evitar problemas de fuso horário
       const date = new Date(dateStr.includes('T') ? dateStr : `${dateStr}T12:00:00`)
       if (isNaN(date.getTime())) return '--/--'
       return format(date, formatStr)
@@ -250,14 +252,14 @@ export default function EscalasPage() {
       createdAt: new Date().toISOString()
     }
 
-    // Update roster assignment status to 'swap_requested'
+    // Atualiza o status da escala original para 'swap_requested'
     const newAssignments = swapOriginalRoster.assignments.map((as: Assignment) => 
       as.userId === user?.uid ? { ...as, status: 'swap_requested' } : as
     )
     const rosterRef = doc(firestore, 'duty_rosters', swapOriginalRoster.id)
     updateDocumentNonBlocking(rosterRef, { assignments: newAssignments })
 
-    // Create swap request document
+    // Cria o documento de solicitação de troca
     const requestsRef = collection(firestore, 'swap_requests')
     addDocumentNonBlocking(requestsRef, swapRequest)
 

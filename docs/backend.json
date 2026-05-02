@@ -1,100 +1,65 @@
 
 {
   "entities": {
-    "AppUser": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "AppUser",
+    "MediaGroup": {
+      "title": "MediaGroup",
       "type": "object",
-      "description": "Represents a user within the Atos Multimídia application. Roles determine access level: moderator (super-user), admin (content manager), member (standard access).",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the AppUser entity."
-        },
-        "externalAuthId": {
-          "type": "string",
-          "description": "The unique identifier for the user from Firebase Authentication."
-        },
-        "name": {
-          "type": "string",
-          "description": "The display name of the user."
-        },
-        "email": {
-          "type": "string",
-          "description": "The email address of the user.",
-          "format": "email"
-        },
-        "role": {
-          "type": "string",
-          "description": "The role level of the user.",
-          "enum": ["moderator", "admin", "member"]
-        },
-        "status": {
-          "type": "string",
-          "description": "The approval status of the user ('pending', 'approved').",
-          "enum": ["pending", "approved"]
-        },
-        "lastProfileUpdate": {
-          "type": "string",
-          "description": "ISO timestamp of the last time the user updated their profile name.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "externalAuthId",
-        "name",
-        "email",
-        "role",
-        "status"
-      ]
-    },
-    "PraiseSong": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "PraiseSong",
-      "type": "object",
-      "description": "Stores details about a praise song.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier."
-        },
-        "title": {
-          "type": "string",
-          "description": "Song title."
-        },
-        "artist": {
-          "type": "string",
-          "description": "Original artist."
-        },
-        "lyrics": {
-          "type": "string"
-        },
-        "notes": {
-          "type": "string"
-        }
-      },
-      "required": ["id", "title", "artist", "lyrics"]
-    },
-    "DutyRole": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "DutyRole",
-      "type": "object",
-      "description": "Defines functions within the media group (e.g., Camera, Switcher).",
+      "description": "Represents a church or media organization (Tenant).",
       "properties": {
         "id": { "type": "string" },
         "name": { "type": "string" },
-        "description": { "type": "string" }
+        "inviteCode": { "type": "string", "description": "Unique code for members to join." },
+        "ownerId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "name"]
+      "required": ["id", "name", "inviteCode", "ownerId"]
     },
-    "DutyRoster": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "DutyRoster",
+    "AppUser": {
+      "title": "AppUser",
       "type": "object",
-      "description": "Schedule of duties with user assignments.",
+      "description": "User with tenant scope.",
       "properties": {
         "id": { "type": "string" },
+        "groupId": { "type": "string" },
+        "externalAuthId": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["moderator", "admin", "member"] },
+        "status": { "type": "string", "enum": ["pending", "approved"] },
+        "lastProfileUpdate": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "groupId", "externalAuthId", "name", "email", "role", "status"]
+    },
+    "PraiseSong": {
+      "title": "PraiseSong",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "groupId": { "type": "string" },
+        "title": { "type": "string" },
+        "artist": { "type": "string" },
+        "lyrics": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "required": ["id", "groupId", "title", "artist", "lyrics"]
+    },
+    "DutyRole": {
+      "title": "DutyRole",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "groupId": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["id", "groupId", "name"]
+    },
+    "DutyRoster": {
+      "title": "DutyRoster",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "groupId": { "type": "string" },
         "date": { "type": "string", "format": "date" },
         "description": { "type": "string" },
         "assignments": {
@@ -110,94 +75,34 @@
             }
           }
         },
-        "songIds": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "List of song IDs associated with this service."
-        }
+        "songIds": { "type": "array", "items": { "type": "string" } }
       },
-      "required": ["id", "date", "description"]
+      "required": ["id", "groupId", "date", "description"]
     },
     "SwapRequest": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "SwapRequest",
       "type": "object",
-      "description": "Represents a request from a member to swap their duty for another date.",
       "properties": {
         "id": { "type": "string" },
+        "groupId": { "type": "string" },
         "userId": { "type": "string" },
         "userName": { "type": "string" },
         "originalRosterId": { "type": "string" },
-        "originalRosterDate": { "type": "string" },
         "targetRosterId": { "type": "string" },
-        "targetRosterDesc": { "type": "string" },
-        "roleId": { "type": "string" },
-        "roleName": { "type": "string" },
-        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] }
       },
-      "required": ["id", "userId", "originalRosterId", "targetRosterId", "status"]
-    },
-    "ImportantDate": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "ImportantDate",
-      "type": "object",
-      "description": "Community events.",
-      "properties": {
-        "id": { "type": "string" },
-        "title": { "type": "string" },
-        "description": { "type": "string" },
-        "date": { "type": "string", "format": "date-time" },
-        "location": { "type": "string" }
-      },
-      "required": ["id", "title", "description", "date"]
-    },
-    "Feedback": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Feedback",
-      "type": "object",
-      "description": "User feedback.",
-      "properties": {
-        "id": { "type": "string" },
-        "type": { "type": "string" },
-        "message": { "type": "string" },
-        "submittedByUserId": { "type": "string" },
-        "submissionDateTime": { "type": "string", "format": "date-time" }
-      },
-      "required": ["id", "type", "message", "submittedByUserId", "submissionDateTime"]
+      "required": ["id", "groupId", "userId", "originalRosterId", "targetRosterId", "status"]
     }
   },
-  "auth": {
-    "providers": ["password"]
-  },
+  "auth": { "providers": ["password"] },
   "firestore": {
-    "/app_users/{appUserId}": {
-      "schema": "#/backend/entities/AppUser",
-      "description": "User profiles and roles."
-    },
-    "/praise_songs/{praiseSongId}": {
-      "schema": "#/backend/entities/PraiseSong",
-      "description": "Song bank."
-    },
-    "/duty_roles/{roleId}": {
-      "schema": "#/backend/entities/DutyRole",
-      "description": "Available media functions."
-    },
-    "/duty_rosters/{dutyRosterId}": {
-      "schema": "#/backend/entities/DutyRoster",
-      "description": "Service schedules."
-    },
-    "/swap_requests/{requestId}": {
-      "schema": "#/backend/entities/SwapRequest",
-      "description": "Duty swap requests."
-    },
-    "/important_dates/{importantDateId}": {
-      "schema": "#/backend/entities/ImportantDate",
-      "description": "Calendar events."
-    },
-    "/feedback/{feedbackId}": {
-      "schema": "#/backend/entities/Feedback",
-      "description": "Team messages."
-    }
+    "/media_groups/{groupId}": { "schema": "#/backend/entities/MediaGroup", "description": "Tenants." },
+    "/app_users/{appUserId}": { "schema": "#/backend/entities/AppUser", "description": "Scoped users." },
+    "/praise_songs/{songId}": { "schema": "#/backend/entities/PraiseSong", "description": "Scoped songs." },
+    "/duty_roles/{roleId}": { "schema": "#/backend/entities/DutyRole", "description": "Scoped roles." },
+    "/duty_rosters/{rosterId}": { "schema": "#/backend/entities/DutyRoster", "description": "Scoped schedules." },
+    "/swap_requests/{requestId}": { "schema": "#/backend/entities/SwapRequest", "description": "Scoped swaps." },
+    "/important_dates/{dateId}": { "schema": "#/backend/entities/ImportantDate", "description": "Scoped events." },
+    "/feedback/{feedbackId}": { "schema": "#/backend/entities/Feedback", "description": "Scoped feedback." }
   }
 }

@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -10,6 +11,10 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/app_users/$(request.auth.uid)).data;
     }
 
+    function isSameGroup(groupId) {
+      return isSignedIn() && getUserData().groupId == groupId;
+    }
+
     function isModerator() {
       return isSignedIn() && getUserData().role == 'moderator';
     }
@@ -18,8 +23,10 @@ service cloud.firestore {
       return isSignedIn() && (getUserData().role == 'admin' || getUserData().role == 'moderator');
     }
 
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+    match /media_groups/{groupId} {
+      allow read: if isSignedIn() && isSameGroup(groupId);
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && isSameGroup(groupId) && isAdmin();
     }
 
     match /app_users/{appUserId} {
@@ -27,48 +34,44 @@ service cloud.firestore {
       allow list: if isAdmin();
       allow create: if isSignedIn();
       allow update: if isModerator() || 
-                   (isAdmin() && 
-                    request.resource.data.role == resource.data.role && 
-                    resource.data.role != 'moderator') ||
-                   (isOwner(appUserId) && 
-                    request.resource.data.role == resource.data.role && 
-                    request.resource.data.status == resource.data.status);
-      allow delete: if isModerator() && request.auth.uid != appUserId;
+                   (isAdmin() && isSameGroup(resource.data.groupId) && request.resource.data.role == resource.data.role) ||
+                   (request.auth.uid == appUserId && request.resource.data.role == resource.data.role && request.resource.data.status == resource.data.status);
+      allow delete: if isModerator() && isSameGroup(resource.data.groupId);
     }
 
     match /praise_songs/{songId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow read: if isSignedIn() && isSameGroup(resource.data.groupId);
+      allow create: if isAdmin() && isSameGroup(request.resource.data.groupId);
+      allow update, delete: if isAdmin() && isSameGroup(resource.data.groupId);
     }
 
     match /duty_roles/{roleId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow read: if isSignedIn() && isSameGroup(resource.data.groupId);
+      allow write: if isAdmin() && isSameGroup(request.resource.data.groupId);
     }
 
     match /duty_rosters/{rosterId} {
-      allow read: if isSignedIn();
-      allow create: if isAdmin();
-      allow update: if isSignedIn(); 
-      allow delete: if isAdmin();
+      allow read: if isSignedIn() && isSameGroup(resource.data.groupId);
+      allow create: if isAdmin() && isSameGroup(request.resource.data.groupId);
+      allow update: if isSignedIn() && isSameGroup(resource.data.groupId);
+      allow delete: if isAdmin() && isSameGroup(resource.data.groupId);
     }
 
     match /swap_requests/{requestId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow read: if isSignedIn() && isSameGroup(resource.data.groupId);
+      allow create: if isSignedIn() && isSameGroup(request.resource.data.groupId);
+      allow update, delete: if isAdmin() && isSameGroup(resource.data.groupId);
     }
 
     match /important_dates/{dateId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow read: if isSignedIn() && isSameGroup(resource.data.groupId);
+      allow write: if isAdmin() && isSameGroup(request.resource.data.groupId);
     }
 
     match /feedback/{feedbackId} {
-      allow get, list: if isAdmin();
-      allow create: if isSignedIn();
-      allow update, delete: if isModerator();
+      allow get, list: if isAdmin() && isSameGroup(resource.data.groupId);
+      allow create: if isSignedIn() && isSameGroup(request.resource.data.groupId);
+      allow update, delete: if isModerator() && isSameGroup(resource.data.groupId);
     }
   }
 }

@@ -5,12 +5,12 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth, useUser, useFirestore } from "@/firebase"
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
-import { doc, setDoc } from "firebase/firestore"
+import { doc, setDoc, collection, query, where, getDocs } from "firebase/firestore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Church, Loader2, UserPlus, LogIn } from "lucide-react"
+import { Church, Loader2, UserPlus, LogIn, ShieldPlus } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
@@ -18,18 +18,15 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
+  const [churchName, setChurchName] = useState("")
+  const [inviteCode, setInviteCode] = useState("")
   const [loading, setLoading] = useState(false)
-  const [currentYear, setCurrentYear] = useState<number | null>(null)
   
   const auth = useAuth()
   const firestore = useFirestore()
   const { user, isUserLoading } = useUser()
   const router = useRouter()
   const { toast } = useToast()
-
-  useEffect(() => {
-    setCurrentYear(new Date().getFullYear())
-  }, [])
 
   useEffect(() => {
     if (!isUserLoading && user) {
@@ -41,17 +38,12 @@ export default function LoginPage() {
     e.preventDefault()
     if (loading) return
     setLoading(true)
-
     try {
       await signInWithEmailAndPassword(auth, email, password)
       toast({ title: "Bem-vindo!", description: "Login realizado com sucesso." })
       router.push("/dashboard")
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao entrar",
-        description: "Verifique suas credenciais.",
-      })
+      toast({ variant: "destructive", title: "Erro ao entrar", description: "Verifique suas credenciais." })
       setLoading(false)
     }
   }
@@ -59,29 +51,29 @@ export default function LoginPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     if (loading) return
-    
-    if (!name || !email || !password) {
-      toast({ variant: "destructive", title: "Campos obrigatórios", description: "Preencha todos os campos." })
+    if (!name || !email || !password || !inviteCode) {
+      toast({ variant: "destructive", title: "Erro", description: "Preencha todos os campos, incluindo o convite." })
       return
     }
-
-    if (password.length < 6) {
-      toast({ variant: "destructive", title: "Senha curta", description: "A senha deve ter no mínimo 6 caracteres." })
-      return
-    }
-    
     setLoading(true)
 
     try {
+      // Validate Invite Code
+      const q = query(collection(firestore, 'media_groups'), where('inviteCode', '==', inviteCode.toUpperCase()))
+      const snap = await getDocs(q)
+      if (snap.empty) {
+        throw new Error("Código de convite inválido.")
+      }
+      const groupData = snap.docs[0].data()
+      const groupId = snap.docs[0].id
+
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       const uid = userCredential.user.uid
-
       await updateProfile(userCredential.user, { displayName: name })
 
-      const userRef = doc(firestore, 'app_users', uid)
-      // Novos usuários entram como 'member' e 'pending'
-      await setDoc(userRef, {
+      await setDoc(doc(firestore, 'app_users', uid), {
         id: uid,
+        groupId: groupId,
         externalAuthId: uid,
         name: name,
         email: email,
@@ -89,141 +81,105 @@ export default function LoginPage() {
         status: 'pending'
       })
 
-      toast({
-        title: "Conta criada!",
-        description: "Seu cadastro foi enviado para aprovação da liderança.",
-      })
-      
+      toast({ title: "Conta criada!", description: "Aguardando aprovação da liderança." })
       router.push("/dashboard")
     } catch (error: any) {
-      let message = "Ocorreu um erro ao criar sua conta."
-      
-      if (error.code === 'auth/email-already-in-use') {
-        message = "Este e-mail já está cadastrado no sistema."
-      } else if (error.code === 'auth/invalid-email') {
-        message = "O e-mail informado é inválido."
-      } else if (error.code === 'auth/weak-password') {
-        message = "A senha escolhida é muito fraca."
-      }
-
-      toast({ 
-        variant: "destructive", 
-        title: "Não foi possível cadastrar", 
-        description: message 
-      })
-      
+      toast({ variant: "destructive", title: "Erro", description: error.message })
       setLoading(false)
     }
   }
 
-  if (isUserLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-      </div>
-    )
+  const handleCreateGroup = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (loading) return
+    if (!churchName || !name || !email || !password) {
+      toast({ variant: "destructive", title: "Erro", description: "Preencha todos os campos para criar o grupo." })
+      return
+    }
+    setLoading(true)
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+      const uid = userCredential.user.uid
+      await updateProfile(userCredential.user, { displayName: name })
+
+      const groupId = doc(collection(firestore, 'media_groups')).id
+      const generatedCode = `ATOS-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
+
+      await setDoc(doc(firestore, 'media_groups', groupId), {
+        id: groupId,
+        name: churchName,
+        inviteCode: generatedCode,
+        ownerId: uid,
+        createdAt: new Date().toISOString()
+      })
+
+      await setDoc(doc(firestore, 'app_users', uid), {
+        id: uid,
+        groupId: groupId,
+        externalAuthId: uid,
+        name: name,
+        email: email,
+        role: 'moderator',
+        status: 'approved'
+      })
+
+      toast({ title: "Grupo criado!", description: `Código de convite: ${generatedCode}` })
+      router.push("/dashboard")
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erro", description: error.message })
+      setLoading(false)
+    }
   }
 
+  if (isUserLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4 bg-[url('https://picsum.photos/seed/atos1/1920/1080')] bg-cover bg-center">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 bg-[url('https://picsum.photos/seed/atos-tenant/1920/1080')] bg-cover bg-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
       <Card className="w-full max-w-md relative z-10 shadow-2xl border-none">
-        <CardHeader className="text-center space-y-1">
-          <div className="flex justify-center mb-4">
-            <div className="bg-primary p-3 rounded-full">
-              <Church className="h-8 w-8 text-white" />
-            </div>
-          </div>
+        <CardHeader className="text-center">
+          <Church className="h-10 w-10 text-primary mx-auto mb-2" />
           <CardTitle className="text-3xl font-headline text-primary">Atos Multimídia</CardTitle>
-          <CardDescription>Gerencie a mídia da sua igreja com excelência</CardDescription>
+          <CardDescription>Plataforma Multi-igreja de Gestão de Mídia</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsList className="grid w-full grid-cols-3 mb-6">
               <TabsTrigger value="login">Entrar</TabsTrigger>
-              <TabsTrigger value="register">Cadastrar</TabsTrigger>
+              <TabsTrigger value="register">Membro</TabsTrigger>
+              <TabsTrigger value="group">Novo Grupo</TabsTrigger>
             </TabsList>
             
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">E-mail</Label>
-                  <Input 
-                    id="login-email" 
-                    type="email" 
-                    placeholder="seu@email.com" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    autoComplete="email"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">Senha</Label>
-                  <Input 
-                    id="login-password" 
-                    type="password" 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    autoComplete="current-password"
-                  />
-                </div>
-                <Button className="w-full h-11 text-lg font-bold" type="submit" disabled={loading}>
-                  {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <><LogIn className="mr-2 h-5 w-5" /> Entrar</>}
-                </Button>
+                <div className="space-y-2"><Label>E-mail</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
+                <div className="space-y-2"><Label>Senha</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
+                <Button className="w-full h-11" type="submit" disabled={loading}>{loading ? <Loader2 className="animate-spin" /> : <><LogIn className="mr-2 h-4 w-4" /> Entrar</>}</Button>
               </form>
             </TabsContent>
 
             <TabsContent value="register">
               <form onSubmit={handleRegister} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="reg-name">Nome Completo</Label>
-                  <Input 
-                    id="reg-name" 
-                    placeholder="Seu nome" 
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                    autoComplete="name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="reg-email">E-mail</Label>
-                  <Input 
-                    id="reg-email" 
-                    type="email" 
-                    placeholder="seu@email.com" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    autoComplete="email"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="reg-password">Senha</Label>
-                  <Input 
-                    id="reg-password" 
-                    type="password" 
-                    placeholder="Mínimo 6 caracteres"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    autoComplete="new-password"
-                  />
-                </div>
-                <Button className="w-full h-11 text-lg font-bold" type="submit" disabled={loading}>
-                  {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <><UserPlus className="mr-2 h-5 w-5" /> Solicitar Acesso</>}
-                </Button>
+                <div className="space-y-2"><Label>Código de Convite</Label><Input placeholder="Ex: ATOS-XXXX" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} required /></div>
+                <div className="space-y-2"><Label>Nome Completo</Label><Input value={name} onChange={(e) => setName(e.target.value)} required /></div>
+                <div className="space-y-2"><Label>E-mail</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
+                <div className="space-y-2"><Label>Senha</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
+                <Button className="w-full h-11" type="submit" disabled={loading}>{loading ? <Loader2 className="animate-spin" /> : <><UserPlus className="mr-2 h-4 w-4" /> Solicitar Acesso</>}</Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="group">
+              <form onSubmit={handleCreateGroup} className="space-y-4">
+                <div className="space-y-2"><Label>Nome da Igreja/Grupo</Label><Input placeholder="Ex: Igreja Central" value={churchName} onChange={(e) => setChurchName(e.target.value)} required /></div>
+                <div className="space-y-2"><Label>Seu Nome (Administrador)</Label><Input value={name} onChange={(e) => setName(e.target.value)} required /></div>
+                <div className="space-y-2"><Label>E-mail</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
+                <div className="space-y-2"><Label>Senha</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
+                <Button className="w-full h-11" type="submit" disabled={loading}>{loading ? <Loader2 className="animate-spin" /> : <><ShieldPlus className="mr-2 h-4 w-4" /> Criar Igreja</>}</Button>
               </form>
             </TabsContent>
           </Tabs>
         </CardContent>
-        <CardFooter className="flex flex-col gap-2">
-          <p className="text-xs text-center text-muted-foreground mt-2">
-            Atos Multimídia &copy; {currentYear ?? '...'} - Grupo de Mídia
-          </p>
-        </CardFooter>
       </Card>
     </div>
   )

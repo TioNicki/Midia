@@ -43,6 +43,7 @@ export default function LoginPage() {
       toast({ title: "Bem-vindo!", description: "Login realizado com sucesso." })
       router.push("/dashboard")
     } catch (error: any) {
+      console.error("Erro no login:", error)
       toast({ variant: "destructive", title: "Erro ao entrar", description: "Verifique suas credenciais." })
       setLoading(false)
     }
@@ -55,6 +56,11 @@ export default function LoginPage() {
     const cleanCode = inviteCode.trim().toUpperCase()
     if (!name || !email || !password || !cleanCode) {
       toast({ variant: "destructive", title: "Erro", description: "Preencha todos os campos, incluindo o código de convite." })
+      return
+    }
+
+    if (password.length < 6) {
+      toast({ variant: "destructive", title: "Senha Fraca", description: "A senha deve ter no mínimo 6 caracteres." })
       return
     }
     
@@ -111,6 +117,7 @@ export default function LoginPage() {
       let message = "Ocorreu um erro ao processar seu cadastro."
       if (error.code === 'auth/email-already-in-use') message = "Este e-mail já está em uso."
       if (error.code === 'auth/weak-password') message = "A senha deve ter no mínimo 6 caracteres."
+      if (error.code === 'auth/invalid-email') message = "O e-mail informado é inválido."
       
       toast({ variant: "destructive", title: "Erro no cadastro", description: message })
       setLoading(false)
@@ -124,6 +131,12 @@ export default function LoginPage() {
       toast({ variant: "destructive", title: "Erro", description: "Preencha todos os campos para criar o grupo." })
       return
     }
+
+    if (password.length < 6) {
+      toast({ variant: "destructive", title: "Senha Fraca", description: "A senha deve ter no mínimo 6 caracteres." })
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -167,7 +180,11 @@ export default function LoginPage() {
       router.push("/dashboard")
     } catch (error: any) {
       console.error("Erro ao criar grupo:", error)
-      toast({ variant: "destructive", title: "Erro ao criar grupo", description: error.message })
+      let message = "Ocorreu um erro ao criar o grupo."
+      if (error.code === 'auth/email-already-in-use') message = "Este e-mail já está em uso."
+      if (error.code === 'auth/weak-password') message = "A senha deve ter no mínimo 6 caracteres."
+      
+      toast({ variant: "destructive", title: "Erro ao criar grupo", description: message })
       setLoading(false)
     }
   }
@@ -208,7 +225,11 @@ export default function LoginPage() {
                 </div>
                 <div className="space-y-2"><Label>Nome Completo</Label><Input value={name} onChange={(e) => setName(e.target.value)} required /></div>
                 <div className="space-y-2"><Label>E-mail</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
-                <div className="space-y-2"><Label>Senha</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
+                <div className="space-y-2">
+                  <Label>Senha</Label>
+                  <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+                  <p className="text-[10px] text-muted-foreground">No mínimo 6 caracteres.</p>
+                </div>
                 <Button className="w-full h-11" type="submit" disabled={loading}>{loading ? <Loader2 className="animate-spin" /> : <><UserPlus className="mr-2 h-4 w-4" /> Solicitar Acesso</>}</Button>
               </form>
             </TabsContent>
@@ -218,7 +239,11 @@ export default function LoginPage() {
                 <div className="space-y-2"><Label>Nome da Igreja / Grupo</Label><Input placeholder="Ex: Igreja Batista Central" value={churchName} onChange={(e) => setChurchName(e.target.value)} required /></div>
                 <div className="space-y-2"><Label>Seu Nome (Administrador)</Label><Input value={name} onChange={(e) => setName(e.target.value)} required /></div>
                 <div className="space-y-2"><Label>E-mail</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
-                <div className="space-y-2"><Label>Senha</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
+                <div className="space-y-2">
+                  <Label>Senha</Label>
+                  <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+                  <p className="text-[10px] text-muted-foreground">No mínimo 6 caracteres.</p>
+                </div>
                 <Button className="w-full h-11" type="submit" disabled={loading}>{loading ? <Loader2 className="animate-spin" /> : <><ShieldPlus className="mr-2 h-4 w-4" /> Criar Painel</>}</Button>
               </form>
             </TabsContent>

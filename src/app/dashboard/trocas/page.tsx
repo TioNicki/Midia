@@ -1,8 +1,9 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
-import { collection, doc, writeBatch } from "firebase/firestore"
+import { collection, doc, writeBatch, query, where } from "firebase/firestore"
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -37,16 +38,20 @@ export default function TrocasPage() {
     [firestore, user]
   )
   const { data: profile } = useDoc(userProfileRef)
+  const groupId = profile?.groupId
   const isAdminOrHigher = profile?.role === 'admin' || profile?.role === 'moderator'
 
-  const requestsRef = useMemoFirebase(() => 
-    isAdminOrHigher ? collection(firestore, 'swap_requests') : null, 
-    [firestore, isAdminOrHigher]
+  const requestsQuery = useMemoFirebase(() => 
+    (isAdminOrHigher && groupId) ? query(collection(firestore, 'swap_requests'), where('groupId', '==', groupId)) : null, 
+    [firestore, isAdminOrHigher, groupId]
   )
-  const { data: requests, isLoading } = useCollection(requestsRef)
+  const { data: requests, isLoading } = useCollection(requestsQuery)
 
-  const rostersRef = useMemoFirebase(() => collection(firestore, 'duty_rosters'), [firestore])
-  const { data: rosters } = useCollection(rostersRef)
+  const rostersQuery = useMemoFirebase(() => 
+    groupId ? query(collection(firestore, 'duty_rosters'), where('groupId', '==', groupId)) : null, 
+    [firestore, groupId]
+  )
+  const { data: rosters } = useCollection(rostersQuery)
 
   if (!isMounted) return null
 

@@ -3,7 +3,7 @@
 
 import { useState } from "react"
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
-import { collection, doc } from "firebase/firestore"
+import { collection, doc, query, where } from "firebase/firestore"
 import { addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -47,17 +47,21 @@ export default function FuncoesPage() {
     [firestore, user]
   )
   const { data: profile } = useDoc(userProfileRef)
+  const groupId = profile?.groupId
   const isAdminOrHigher = profile?.role === 'admin' || profile?.role === 'moderator'
 
-  const rolesRef = useMemoFirebase(() => collection(firestore, 'duty_roles'), [firestore])
-  const { data: roles, isLoading } = useCollection(rolesRef)
+  const rolesQuery = useMemoFirebase(() => 
+    groupId ? query(collection(firestore, 'duty_roles'), where('groupId', '==', groupId)) : null, 
+    [firestore, groupId]
+  )
+  const { data: roles, isLoading } = useCollection(rolesQuery)
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newRole.name) return
+    if (!newRole.name || !groupId) return
 
     const colRef = collection(firestore, 'duty_roles')
-    addDocumentNonBlocking(colRef, newRole)
+    addDocumentNonBlocking(colRef, { ...newRole, groupId })
     
     setNewRole({ name: "", description: "" })
     setIsCreateOpen(false)

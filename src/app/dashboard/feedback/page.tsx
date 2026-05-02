@@ -3,7 +3,7 @@
 
 import { useState } from "react"
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
-import { collection, doc } from "firebase/firestore"
+import { collection, doc, query, where } from "firebase/firestore"
 import { addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -52,23 +52,25 @@ export default function FeedbackPage() {
     [firestore, user]
   )
   const { data: profile } = useDoc(userProfileRef)
+  const groupId = profile?.groupId
   const isAdminOrHigher = profile?.role === 'admin' || profile?.role === 'moderator'
   const isModerator = profile?.role === 'moderator'
 
-  const feedbacksRef = useMemoFirebase(() => 
-    isAdminOrHigher ? collection(firestore, 'feedback') : null, 
-    [firestore, isAdminOrHigher]
+  const feedbacksQuery = useMemoFirebase(() => 
+    (isAdminOrHigher && groupId) ? query(collection(firestore, 'feedback'), where('groupId', '==', groupId)) : null, 
+    [firestore, isAdminOrHigher, groupId]
   )
-  const { data: feedbacks, isLoading: isLoadingFeedbacks } = useCollection(feedbacksRef)
+  const { data: feedbacks, isLoading: isLoadingFeedbacks } = useCollection(feedbacksQuery)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user) return
+    if (!user || !groupId) return
 
     setLoading(true)
     const feedbackData = {
       type,
       message,
+      groupId,
       submittedByUserId: user.uid,
       submissionDateTime: new Date().toISOString(),
     }

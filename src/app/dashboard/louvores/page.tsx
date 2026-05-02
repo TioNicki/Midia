@@ -3,7 +3,7 @@
 
 import { useState } from "react"
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
-import { collection, doc } from "firebase/firestore"
+import { collection, doc, query, where } from "firebase/firestore"
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -59,10 +59,14 @@ export default function LouvoresPage() {
     [firestore, user]
   )
   const { data: profile } = useDoc(userProfileRef)
+  const groupId = profile?.groupId
   const isAdminOrHigher = profile?.role === 'admin' || profile?.role === 'moderator'
 
-  const songsRef = useMemoFirebase(() => collection(firestore, 'praise_songs'), [firestore])
-  const { data: songs, isLoading } = useCollection(songsRef)
+  const songsQuery = useMemoFirebase(() => 
+    groupId ? query(collection(firestore, 'praise_songs'), where('groupId', '==', groupId)) : null, 
+    [firestore, groupId]
+  )
+  const { data: songs, isLoading } = useCollection(songsQuery)
 
   const filteredSongs = songs?.filter(song => 
     song.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -88,7 +92,7 @@ export default function LouvoresPage() {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!songData.title || !songData.artist) {
+    if (!songData.title || !songData.artist || !groupId) {
       toast({ variant: "destructive", title: "Erro", description: "Título e Artista são obrigatórios." })
       return
     }
@@ -99,7 +103,7 @@ export default function LouvoresPage() {
       toast({ title: "Louvor atualizado", description: "As alterações foram salvas com sucesso." })
     } else {
       const colRef = collection(firestore, 'praise_songs')
-      addDocumentNonBlocking(colRef, { ...songData, createdAt: new Date().toISOString() })
+      addDocumentNonBlocking(colRef, { ...songData, groupId, createdAt: new Date().toISOString() })
       toast({ title: "Louvor adicionado", description: "A música foi cadastrada no banco de dados." })
     }
     

@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react"
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
-import { collection, doc } from "firebase/firestore"
+import { collection, doc, query, where } from "firebase/firestore"
 import { addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -53,18 +53,22 @@ export default function EventosPage() {
     [firestore, user]
   )
   const { data: profile } = useDoc(userProfileRef)
+  const groupId = profile?.groupId
   const isAdminOrHigher = profile?.role === 'admin' || profile?.role === 'moderator'
 
-  const eventsRef = useMemoFirebase(() => collection(firestore, 'important_dates'), [firestore])
-  const { data: events, isLoading } = useCollection(eventsRef)
+  const eventsQuery = useMemoFirebase(() => 
+    groupId ? query(collection(firestore, 'important_dates'), where('groupId', '==', groupId)) : null, 
+    [firestore, groupId]
+  )
+  const { data: events, isLoading } = useCollection(eventsQuery)
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newEvent.title || !newEvent.date) return
+    if (!newEvent.title || !newEvent.date || !groupId) return
 
     const colRef = collection(firestore, 'important_dates')
     const dateFormatted = new Date(newEvent.date).toISOString()
-    addDocumentNonBlocking(colRef, { ...newEvent, date: dateFormatted })
+    addDocumentNonBlocking(colRef, { ...newEvent, groupId, date: dateFormatted })
     
     setNewEvent({ title: "", description: "", date: "", location: "" })
     setIsCreateOpen(false)

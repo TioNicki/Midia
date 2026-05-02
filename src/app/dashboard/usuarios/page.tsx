@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -42,15 +43,16 @@ export default function UsuariosPage() {
     [firestore, currentUser]
   )
   const { data: profile } = useDoc(userProfileRef)
+  const groupId = profile?.groupId
   
   const isModerator = profile?.role === 'moderator'
   const isAdminOrHigher = profile?.role === 'admin' || profile?.role === 'moderator'
 
-  const usersRef = useMemoFirebase(() => 
-    isAdminOrHigher ? collection(firestore, 'app_users') : null, 
-    [firestore, isAdminOrHigher]
+  const usersQuery = useMemoFirebase(() => 
+    (isAdminOrHigher && groupId) ? query(collection(firestore, 'app_users'), where('groupId', '==', groupId)) : null, 
+    [firestore, isAdminOrHigher, groupId]
   )
-  const { data: users, isLoading } = useCollection(usersRef)
+  const { data: users, isLoading } = useCollection(usersQuery)
 
   if (!isMounted) return null
 

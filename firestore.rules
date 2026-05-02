@@ -24,14 +24,15 @@ service cloud.firestore {
     }
 
     match /media_groups/{groupId} {
-      allow read: if isSignedIn() && isSameGroup(groupId);
+      // Permite leitura pública para validar códigos de convite e evitar erros de sincronização no login
+      allow read: if true; 
       allow create: if isSignedIn();
       allow update: if isSignedIn() && isSameGroup(groupId) && isAdmin();
     }
 
     match /app_users/{appUserId} {
       allow get: if isSignedIn();
-      allow list: if isAdmin();
+      allow list: if isSignedIn() && isAdmin();
       allow create: if isSignedIn();
       allow update: if isModerator() || 
                    (isAdmin() && isSameGroup(resource.data.groupId) && request.resource.data.role == resource.data.role) ||

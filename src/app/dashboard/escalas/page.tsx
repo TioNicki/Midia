@@ -3,13 +3,14 @@
 
 import { useState, useEffect } from "react"
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
-import { collection, doc, query, where } from "firebase/firestore"
+import { collection, doc, query, where, serverTimestamp } from "firebase/firestore"
 import { addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { CalendarDays, Plus, Trash2, Loader2, UserPlus, X, Pencil, Eye, Users, Music, Check, ArrowLeftRight, Clock, AlertTriangle } from "lucide-react"
+import { CalendarDays, Plus, Trash2, Loader2, UserPlus, X, Pencil, Eye, Users, Music, Check, ArrowLeftRight, Clock, AlertTriangle, MessageSquare } from "lucide-react"
 import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
@@ -20,6 +21,7 @@ import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { formatShortName } from "@/lib/utils"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Textarea } from "@/components/ui/textarea"
 
 export default function EscalasPage() {
   const firestore = useFirestore()
@@ -28,15 +30,19 @@ export default function EscalasPage() {
   const [isMounted, setIsMounted] = useState(false)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isSwapOpen, setIsSwapOpen] = useState(false)
   const [idToDelete, setIdToDelete] = useState<string | null>(null)
   
+  // States for creation/edit
   const [newRoster, setNewRoster] = useState({ description: "", date: "" })
   const [assignments, setAssignments] = useState<any[]>([])
   const [selectedSongIds, setSelectedSongIds] = useState<string[]>([])
-  
   const [currentMemberId, setCurrentMemberId] = useState("")
   const [currentRoleId, setCurrentRoleId] = useState("")
   const [editingId, setEditingId] = useState<string | null>(null)
+
+  // States for Swap Request
+  const [swapData, setSwapData] = useState({ originalRosterId: "", targetRosterId: "", reason: "" })
 
   useEffect(() => setIsMounted(true), [])
 
@@ -58,6 +64,11 @@ export default function EscalasPage() {
   const rostersQuery = useMemoFirebase(() => groupId ? query(collection(firestore, 'duty_rosters'), where('groupId', '==', groupId)) : null, [firestore, groupId])
   const { data: rosters, isLoading } = useCollection(rostersQuery)
 
+  // Filter rosters where current user is assigned
+  const myAssignments = rosters?.filter(r => 
+    r.assignments?.some((as: any) => as.userId === user?.uid)
+  ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) || []
+
   const handleAddAssignment = () => {
     if (!currentMemberId || !currentRoleId) {
       toast({ variant: "destructive", title: "Erro", description: "Selecione um membro e uma função." })
@@ -69,7 +80,6 @@ export default function EscalasPage() {
 
     if (!member || !role) return
 
-    // Evitar duplicidade na mesma escala para a mesma função
     const exists = assignments.some(a => a.userId === member.id && a.roleId === role.id)
     if (exists) {
       toast({ variant: "destructive", title: "Aviso", description: "Este membro já está escalado nesta função." })
@@ -125,6 +135,67 @@ export default function EscalasPage() {
     closeDialog()
   }
 
+  const handleConfirmPresence = (rosterId: string) => {
+    const roster = rosters?.find(r => r.id === rosterId)
+    if (!roster || !user) return
+
+    const newAssignments = roster.assignments.map((as: any) => 
+      as.userId === user.uid ? { ...as, status: 'confirmed' } : as
+    )
+
+    updateDocumentNonBlocking(doc(firestore, 'duty_rosters', rosterId), {
+      assignments: newAssignments
+    })
+
+    toast({ title: "Presença confirmada!", description: "Obrigado por servir!" })
+  }
+
+  const handleOpenSwap = (rosterId: string) => {
+    setSwapData({ ...swapData, originalRosterId: rosterId })
+    setIsSwapOpen(true)
+  }
+
+  const handleRequestSwap = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user || !groupId || !swapData.originalRosterId || !swapData.targetRosterId) return
+
+    const originalRoster = rosters?.find(r => r.id === swapData.originalRosterId)
+    const targetRoster = rosters?.find(r => r.id === swapData.targetRosterId)
+    const userAssignment = originalRoster?.assignments?.find((as: any) => as.userId === user.uid)
+
+    if (!originalRoster || !targetRoster || !userAssignment) return
+
+    const swapRequest = {
+      groupId,
+      userId: user.uid,
+      userName: profile?.name || user.displayName || "Membro",
+      roleId: userAssignment.roleId,
+      roleName: userAssignment.roleName,
+      originalRosterId: swapData.originalRosterId,
+      originalRosterDate: originalRoster.date,
+      originalRosterDesc: originalRoster.description,
+      targetRosterId: swapData.targetRosterId,
+      targetRosterDesc: targetRoster.description,
+      reason: swapData.reason,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    }
+
+    addDocumentNonBlocking(collection(firestore, 'swap_requests'), swapRequest)
+
+    // Update assignment status in roster to show requested
+    const newAssignments = originalRoster.assignments.map((as: any) => 
+      as.userId === user.uid ? { ...as, status: 'swap_requested' } : as
+    )
+    updateDocumentNonBlocking(doc(firestore, 'duty_rosters', swapData.originalRosterId), {
+      assignments: newAssignments
+    })
+
+    setIsSwapOpen(false)
+    setSwapData({ originalRosterId: "", targetRosterId: "", reason: "" })
+    toast({ title: "Troca solicitada", description: "A liderança analisará seu pedido." })
+  }
+
   const closeDialog = () => {
     setIsCreateOpen(false)
     setEditingId(null)
@@ -154,7 +225,7 @@ export default function EscalasPage() {
   if (!isMounted || !profile) return null
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-headline font-bold text-primary">Escalas de Mídia</h2>
@@ -167,8 +238,61 @@ export default function EscalasPage() {
         )}
       </div>
 
+      {/* Seção do Usuário: Minhas Próximas Atribuições */}
+      {myAssignments.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-xl font-bold flex items-center gap-2">
+            <Badge className="bg-primary/10 text-primary hover:bg-primary/20 p-1 rounded-full"><Users className="h-4 w-4" /></Badge>
+            Suas Próximas Atribuições
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {myAssignments.map((roster) => {
+              const myRole = roster.assignments.find((as: any) => as.userId === user?.uid)
+              return (
+                <Card key={roster.id} className="border-l-4 border-l-primary overflow-hidden">
+                  <CardContent className="p-5">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <p className="text-xs font-bold text-primary uppercase tracking-wider">{myRole?.roleName}</p>
+                        <h4 className="text-lg font-bold">{roster.description}</h4>
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-3 w-3" /> {format(new Date(roster.date + 'T12:00:00'), "EEEE, dd 'de' MMMM", { locale: ptBR })}
+                        </p>
+                      </div>
+                      <Badge variant={myRole?.status === 'confirmed' ? 'default' : myRole?.status === 'swap_requested' ? 'destructive' : 'outline'}>
+                        {myRole?.status === 'confirmed' ? 'Confirmado' : myRole?.status === 'swap_requested' ? 'Troca Solicitada' : 'Pendente'}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      {myRole?.status === 'pending' && (
+                        <Button size="sm" className="flex-1 font-bold" onClick={() => handleConfirmPresence(roster.id)}>
+                          <Check className="mr-2 h-4 w-4" /> Confirmar
+                        </Button>
+                      )}
+                      {myRole?.status !== 'swap_requested' && (
+                        <Button size="sm" variant="outline" className="flex-1" onClick={() => handleOpenSwap(roster.id)}>
+                          <ArrowLeftRight className="mr-2 h-4 w-4" /> Solicitar Troca
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Tabela Geral de Escalas */}
       <Card>
-        <CardContent className="pt-6">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <CalendarDays className="h-5 w-5 text-primary" /> Todas as Escalas
+          </CardTitle>
+          <CardDescription>Visualização completa do planejamento do grupo.</CardDescription>
+        </CardHeader>
+        <CardContent>
           {isLoading ? (
             <div className="flex justify-center p-12"><Loader2 className="animate-spin text-primary" /></div>
           ) : (
@@ -177,7 +301,7 @@ export default function EscalasPage() {
                 <TableRow>
                   <TableHead>Data</TableHead>
                   <TableHead>Culto / Evento</TableHead>
-                  <TableHead>Membros</TableHead>
+                  <TableHead>Equipe</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -189,17 +313,14 @@ export default function EscalasPage() {
                     </TableCell>
                     <TableCell>{roster.description}</TableCell>
                     <TableCell>
-                      <div className="flex -space-x-2">
-                        {roster.assignments?.slice(0, 3).map((a: any, i: number) => (
-                          <div key={i} className="h-8 w-8 rounded-full border-2 border-background bg-muted flex items-center justify-center text-[10px] font-bold" title={a.userName}>
-                            {a.userName.charAt(0)}
-                          </div>
+                      <div className="flex flex-wrap gap-1">
+                        {roster.assignments?.map((as: any, i: number) => (
+                          <Badge key={i} variant="outline" className={`text-[9px] px-1.5 h-5 flex gap-1 items-center ${as.status === 'confirmed' ? 'border-green-500 text-green-600 bg-green-50' : as.status === 'swap_requested' ? 'border-red-500 text-red-600 bg-red-50' : ''}`}>
+                            {as.status === 'confirmed' && <Check className="h-2 w-2" />}
+                            {as.status === 'swap_requested' && <ArrowLeftRight className="h-2 w-2" />}
+                            {formatShortName(as.userName)} ({as.roleName})
+                          </Badge>
                         ))}
-                        {(roster.assignments?.length || 0) > 3 && (
-                          <div className="h-8 w-8 rounded-full border-2 border-background bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold">
-                            +{(roster.assignments?.length || 0) - 3}
-                          </div>
-                        )}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
@@ -236,6 +357,48 @@ export default function EscalasPage() {
         </CardContent>
       </Card>
 
+      {/* Diálogo de Troca de Escala */}
+      <Dialog open={isSwapOpen} onOpenChange={setIsSwapOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ArrowLeftRight className="h-5 w-5 text-primary" /> Solicitar Troca de Escala
+            </DialogTitle>
+            <DialogDescription>Escolha outra escala para a qual deseja ser movido.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleRequestSwap} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Mudar para qual Escala / Data?</Label>
+              <Select value={swapData.targetRosterId} onValueChange={(val) => setSwapData({...swapData, targetRosterId: val})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o destino..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {rosters?.filter(r => r.id !== swapData.originalRosterId && new Date(r.date) >= new Date()).map(r => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {format(new Date(r.date + 'T12:00:00'), 'dd/MM')} - {r.description}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Motivo (Opcional)</Label>
+              <Textarea 
+                placeholder="Ex: Terei um compromisso familiar inadiável..."
+                value={swapData.reason}
+                onChange={(e) => setSwapData({...swapData, reason: e.target.value})}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsSwapOpen(false)}>Cancelar</Button>
+              <Button type="submit" disabled={!swapData.targetRosterId}>Enviar Solicitação</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Diálogo de Criação/Edição (ADMIN) */}
       <Dialog open={isCreateOpen} onOpenChange={(open) => !open && closeDialog()}>
         <DialogContent className="max-w-4xl bg-card max-h-[95vh] flex flex-col overflow-hidden">
           <DialogHeader className="shrink-0">
@@ -248,7 +411,6 @@ export default function EscalasPage() {
 
           <ScrollArea className="flex-1 pr-4">
             <form onSubmit={handleSave} className="space-y-8 py-4">
-              {/* Informações Básicas */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label>Data do Evento</Label>
@@ -272,7 +434,6 @@ export default function EscalasPage() {
                 </div>
               </div>
 
-              {/* Montagem da Equipe */}
               <Card className="border-dashed border-primary/20 bg-primary/5">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
@@ -343,7 +504,6 @@ export default function EscalasPage() {
                 </CardContent>
               </Card>
 
-              {/* Repertório de Louvores */}
               <div className="space-y-4">
                 <h3 className="text-lg font-bold flex items-center gap-2">
                   <Music className="h-5 w-5 text-primary" /> Repertório (Louvores)
@@ -368,11 +528,6 @@ export default function EscalasPage() {
                       </div>
                     </div>
                   ))}
-                  {!songs || songs.length === 0 && (
-                    <div className="col-span-full text-center p-4 text-muted-foreground text-xs italic">
-                      Nenhum louvor cadastrado no banco.
-                    </div>
-                  )}
                 </div>
               </div>
             </form>

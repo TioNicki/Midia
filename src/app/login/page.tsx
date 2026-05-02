@@ -59,12 +59,14 @@ export default function LoginPage() {
 
     try {
       // Validate Invite Code
-      const q = query(collection(firestore, 'media_groups'), where('inviteCode', '==', inviteCode.toUpperCase()))
+      const codeToSearch = inviteCode.trim().toUpperCase()
+      const q = query(collection(firestore, 'media_groups'), where('inviteCode', '==', codeToSearch))
       const snap = await getDocs(q)
+      
       if (snap.empty) {
-        throw new Error("Código de convite inválido.")
+        throw new Error("Código de convite inválido ou grupo não encontrado.")
       }
-      const groupData = snap.docs[0].data()
+      
       const groupId = snap.docs[0].id
 
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
@@ -78,7 +80,8 @@ export default function LoginPage() {
         name: name,
         email: email,
         role: 'member',
-        status: 'pending'
+        status: 'pending',
+        createdAt: new Date().toISOString()
       })
 
       toast({ title: "Conta criada!", description: "Aguardando aprovação da liderança." })
@@ -103,8 +106,11 @@ export default function LoginPage() {
       const uid = userCredential.user.uid
       await updateProfile(userCredential.user, { displayName: name })
 
+      // Para o grupo Atos, usamos um ID estável ou geramos um novo
+      const isMainGroup = churchName.toLowerCase().includes("atos")
+      const generatedCode = isMainGroup ? "ATOS-SM05" : `ATOS-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
+      
       const groupId = doc(collection(firestore, 'media_groups')).id
-      const generatedCode = `ATOS-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
 
       await setDoc(doc(firestore, 'media_groups', groupId), {
         id: groupId,
@@ -121,7 +127,8 @@ export default function LoginPage() {
         name: name,
         email: email,
         role: 'moderator',
-        status: 'approved'
+        status: 'approved',
+        createdAt: new Date().toISOString()
       })
 
       toast({ title: "Grupo criado!", description: `Código de convite: ${generatedCode}` })
@@ -141,14 +148,14 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <Church className="h-10 w-10 text-primary mx-auto mb-2" />
           <CardTitle className="text-3xl font-headline text-primary">Atos Multimídia</CardTitle>
-          <CardDescription>Plataforma Multi-igreja de Gestão de Mídia</CardDescription>
+          <CardDescription>Gestão de Mídia para Igrejas</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-3 mb-6">
               <TabsTrigger value="login">Entrar</TabsTrigger>
               <TabsTrigger value="register">Membro</TabsTrigger>
-              <TabsTrigger value="group">Novo Grupo</TabsTrigger>
+              <TabsTrigger value="group">Nova Igreja</TabsTrigger>
             </TabsList>
             
             <TabsContent value="login">
@@ -161,7 +168,11 @@ export default function LoginPage() {
 
             <TabsContent value="register">
               <form onSubmit={handleRegister} className="space-y-4">
-                <div className="space-y-2"><Label>Código de Convite</Label><Input placeholder="Ex: ATOS-XXXX" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} required /></div>
+                <div className="space-y-2">
+                  <Label>Código de Convite</Label>
+                  <Input placeholder="Ex: ATOS-SM05" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} required />
+                  <p className="text-[10px] text-muted-foreground">Solicite o código ao seu coordenador de mídia.</p>
+                </div>
                 <div className="space-y-2"><Label>Nome Completo</Label><Input value={name} onChange={(e) => setName(e.target.value)} required /></div>
                 <div className="space-y-2"><Label>E-mail</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
                 <div className="space-y-2"><Label>Senha</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
@@ -171,11 +182,11 @@ export default function LoginPage() {
 
             <TabsContent value="group">
               <form onSubmit={handleCreateGroup} className="space-y-4">
-                <div className="space-y-2"><Label>Nome da Igreja/Grupo</Label><Input placeholder="Ex: Igreja Central" value={churchName} onChange={(e) => setChurchName(e.target.value)} required /></div>
+                <div className="space-y-2"><Label>Nome da Igreja</Label><Input placeholder="Ex: Igreja Central" value={churchName} onChange={(e) => setChurchName(e.target.value)} required /></div>
                 <div className="space-y-2"><Label>Seu Nome (Administrador)</Label><Input value={name} onChange={(e) => setName(e.target.value)} required /></div>
                 <div className="space-y-2"><Label>E-mail</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
                 <div className="space-y-2"><Label>Senha</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
-                <Button className="w-full h-11" type="submit" disabled={loading}>{loading ? <Loader2 className="animate-spin" /> : <><ShieldPlus className="mr-2 h-4 w-4" /> Criar Igreja</>}</Button>
+                <Button className="w-full h-11" type="submit" disabled={loading}>{loading ? <Loader2 className="animate-spin" /> : <><ShieldPlus className="mr-2 h-4 w-4" /> Criar Painel</>}</Button>
               </form>
             </TabsContent>
           </Tabs>

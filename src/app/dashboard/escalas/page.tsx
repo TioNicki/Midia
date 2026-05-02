@@ -58,7 +58,8 @@ export default function EscalasPage() {
   const songsQuery = useMemoFirebase(() => groupId ? query(collection(firestore, 'praise_songs'), where('groupId', '==', groupId)) : null, [firestore, groupId])
   const { data: songs } = useCollection(songsQuery)
 
-  const usersQuery = useMemoFirebase(() => groupId ? query(collection(firestore, 'app_users'), where('groupId', '==', groupId)) : null, [firestore, groupId])
+  // FIX: Only list users if the current user is an admin, avoiding permission errors for regular members
+  const usersQuery = useMemoFirebase(() => (isAdminOrHigher && groupId) ? query(collection(firestore, 'app_users'), where('groupId', '==', groupId)) : null, [firestore, groupId, isAdminOrHigher])
   const { data: allUsers } = useCollection(usersQuery)
   const approvedUsers = allUsers?.filter(u => u.status === 'approved') || []
 

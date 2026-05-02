@@ -8,7 +8,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Loader2, AlertCircle, LogOut, ShieldAlert } from "lucide-react"
-import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs } from "firebase/firestore"
+import { doc, setDoc, updateDoc, collection, query, where, getDocs } from "firebase/firestore"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/firebase"
 import { signOut } from "firebase/auth"
@@ -32,13 +32,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   )
   const { data: group } = useDoc(groupRef)
 
-  // Lógica de migração para o grupo principal ATOS-SM05
+  // Lógica de migração para o grupo principal ATOS-SM05 (apenas para usuários legados sem grupo)
   useEffect(() => {
     async function migrateLegacyUser() {
       if (user && profile && !profile.groupId && !isMigrating) {
         setIsMigrating(true)
         try {
-          // Busca ou cria o grupo ATOS-SM05
           const groupsRef = collection(firestore, 'media_groups')
           const q = query(groupsRef, where('inviteCode', '==', 'ATOS-SM05'))
           const querySnapshot = await getDocs(q)
@@ -46,7 +45,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           let targetGroupId = ""
           
           if (querySnapshot.empty) {
-            // Cria o grupo padrão se não existir
             const newGroupRef = doc(groupsRef)
             targetGroupId = newGroupRef.id
             await setDoc(newGroupRef, {
@@ -60,12 +58,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             targetGroupId = querySnapshot.docs[0].id
           }
 
-          // Atualiza o perfil do usuário
           await updateDoc(doc(firestore, 'app_users', user.uid), {
             groupId: targetGroupId
           })
           
-          window.location.reload() // Recarrega para aplicar o novo groupId
+          window.location.reload()
         } catch (error) {
           console.error("Migration error:", error)
         } finally {
@@ -86,7 +83,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
-          {isMigrating && <p className="text-sm text-muted-foreground animate-pulse">Sincronizando seu perfil com o grupo ATOS-SM05...</p>}
+          {isMigrating && <p className="text-sm text-muted-foreground animate-pulse">Sincronizando seu perfil...</p>}
         </div>
       </div>
     )
@@ -114,7 +111,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <AlertCircle className="h-12 w-12 text-amber-500 mx-auto" />
           <h1 className="text-3xl font-bold">Aguardando Aprovação</h1>
           <p className="text-muted-foreground">Sua conta no grupo <strong>{group?.name || '...'}</strong> aguarda liberação da liderança.</p>
-          <p className="text-sm font-mono bg-muted p-2 rounded">Convite: {group?.inviteCode || 'ATOS-SM05'}</p>
+          <div className="bg-muted p-4 rounded-lg border">
+            <p className="text-xs text-muted-foreground mb-1 uppercase font-bold">Seu Código de Convite</p>
+            <p className="font-mono text-lg">{group?.inviteCode || '...'}</p>
+          </div>
           <Button variant="outline" onClick={() => signOut(auth).then(() => router.push("/login"))}><LogOut className="mr-2 h-4 w-4" /> Sair</Button>
         </div>
       </div>

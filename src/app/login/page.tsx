@@ -51,28 +51,33 @@ export default function LoginPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     if (loading) return
-    if (!name || !email || !password || !inviteCode) {
-      toast({ variant: "destructive", title: "Erro", description: "Preencha todos os campos, incluindo o convite." })
+    
+    const cleanCode = inviteCode.trim().toUpperCase()
+    if (!name || !email || !password || !cleanCode) {
+      toast({ variant: "destructive", title: "Erro", description: "Preencha todos os campos, incluindo o código de convite." })
       return
     }
+    
     setLoading(true)
 
     try {
-      // Validate Invite Code
-      const codeToSearch = inviteCode.trim().toUpperCase()
-      const q = query(collection(firestore, 'media_groups'), where('inviteCode', '==', codeToSearch))
+      // 1. Validar Código de Convite de forma estrita
+      const q = query(collection(firestore, 'media_groups'), where('inviteCode', '==', cleanCode))
       const snap = await getDocs(q)
       
       if (snap.empty) {
-        throw new Error("Código de convite inválido ou grupo não encontrado.")
+        throw new Error("Código de convite inválido ou não encontrado. Verifique com seu coordenador.")
       }
       
+      const targetGroup = snap.docs[0].data()
       const groupId = snap.docs[0].id
 
+      // 2. Criar Usuário no Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       const uid = userCredential.user.uid
       await updateProfile(userCredential.user, { displayName: name })
 
+      // 3. Criar Perfil vinculado ao grupo encontrado
       await setDoc(doc(firestore, 'app_users', uid), {
         id: uid,
         groupId: groupId,
@@ -84,10 +89,13 @@ export default function LoginPage() {
         createdAt: new Date().toISOString()
       })
 
-      toast({ title: "Conta criada!", description: "Aguardando aprovação da liderança." })
+      toast({ 
+        title: "Solicitação enviada!", 
+        description: `Você foi vinculado ao grupo ${targetGroup.name}. Aguarde a aprovação.` 
+      })
       router.push("/dashboard")
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Erro", description: error.message })
+      toast({ variant: "destructive", title: "Erro no cadastro", description: error.message })
       setLoading(false)
     }
   }
@@ -106,13 +114,19 @@ export default function LoginPage() {
       const uid = userCredential.user.uid
       await updateProfile(userCredential.user, { displayName: name })
 
-      // Para o grupo Atos, usamos um ID estável ou geramos um novo
-      const isMainGroup = churchName.toLowerCase().includes("atos")
-      const generatedCode = isMainGroup ? "ATOS-SM05" : `ATOS-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
+      // Gerar código baseado no primeiro nome do grupo
+      const firstWord = churchName.trim().split(/\s+/)[0].toUpperCase()
+      const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase()
       
-      const groupId = doc(collection(firestore, 'media_groups')).id
+      // Caso especial para Atos Multimídia principal
+      const isMainAtos = churchName.toLowerCase().includes("atos") && churchName.toLowerCase().includes("multimídia")
+      const generatedCode = isMainAtos ? "ATOS-SM05" : `${firstWord}-${randomSuffix}`
+      
+      const groupsRef = collection(firestore, 'media_groups')
+      const newGroupDoc = doc(groupsRef)
+      const groupId = newGroupDoc.id
 
-      await setDoc(doc(firestore, 'media_groups', groupId), {
+      await setDoc(newGroupDoc, {
         id: groupId,
         name: churchName,
         inviteCode: generatedCode,
@@ -131,10 +145,10 @@ export default function LoginPage() {
         createdAt: new Date().toISOString()
       })
 
-      toast({ title: "Grupo criado!", description: `Código de convite: ${generatedCode}` })
+      toast({ title: "Grupo criado com sucesso!", description: `Seu código de convite é: ${generatedCode}` })
       router.push("/dashboard")
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Erro", description: error.message })
+      toast({ variant: "destructive", title: "Erro ao criar grupo", description: error.message })
       setLoading(false)
     }
   }
@@ -170,8 +184,8 @@ export default function LoginPage() {
               <form onSubmit={handleRegister} className="space-y-4">
                 <div className="space-y-2">
                   <Label>Código de Convite</Label>
-                  <Input placeholder="Ex: ATOS-SM05" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} required />
-                  <p className="text-[10px] text-muted-foreground">Solicite o código ao seu coordenador de mídia.</p>
+                  <Input placeholder="Ex: IGREJA-XXXX" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} required />
+                  <p className="text-[10px] text-muted-foreground italic">Solicite o código oficial ao seu coordenador.</p>
                 </div>
                 <div className="space-y-2"><Label>Nome Completo</Label><Input value={name} onChange={(e) => setName(e.target.value)} required /></div>
                 <div className="space-y-2"><Label>E-mail</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
@@ -182,7 +196,7 @@ export default function LoginPage() {
 
             <TabsContent value="group">
               <form onSubmit={handleCreateGroup} className="space-y-4">
-                <div className="space-y-2"><Label>Nome da Igreja</Label><Input placeholder="Ex: Igreja Central" value={churchName} onChange={(e) => setChurchName(e.target.value)} required /></div>
+                <div className="space-y-2"><Label>Nome da Igreja / Grupo</Label><Input placeholder="Ex: Igreja Batista Central" value={churchName} onChange={(e) => setChurchName(e.target.value)} required /></div>
                 <div className="space-y-2"><Label>Seu Nome (Administrador)</Label><Input value={name} onChange={(e) => setName(e.target.value)} required /></div>
                 <div className="space-y-2"><Label>E-mail</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
                 <div className="space-y-2"><Label>Senha</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></div>

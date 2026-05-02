@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { Loader2, AlertCircle, LogOut, ShieldAlert } from "lucide-react"
+import { Loader2, AlertCircle, LogOut, ShieldAlert, Sun, Moon } from "lucide-react"
 import { doc, setDoc, updateDoc, collection, query, where, getDocs } from "firebase/firestore"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/firebase"
@@ -19,6 +19,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const auth = useAuth()
   const router = useRouter()
   const [isMigrating, setIsMigrating] = useState(false)
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+
+  // Gerenciamento de Tema (Modo Escuro)
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    
+    const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light')
+    setTheme(initialTheme)
+    
+    if (initialTheme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [])
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light'
+    setTheme(newTheme)
+    localStorage.setItem('theme', newTheme)
+    
+    if (newTheme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }
 
   const userProfileRef = useMemoFirebase(() => 
     user ? doc(firestore, 'app_users', user.uid) : null, 
@@ -32,7 +60,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   )
   const { data: group } = useDoc(groupRef)
 
-  // Lógica de migração para o grupo principal ATOS-SM05 (apenas para usuários legados sem grupo)
+  // Lógica de migração para o grupo principal ATOS-SM05
   useEffect(() => {
     async function migrateLegacyUser() {
       if (user && profile && !profile.groupId && !isMigrating) {
@@ -129,6 +157,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <SidebarTrigger />
           <div className="flex flex-1 items-center justify-between">
             <h1 className="text-lg font-headline font-semibold text-primary">{group?.name || 'Atos Multimídia'}</h1>
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full">
+              {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+            </Button>
           </div>
         </header>
         <main className="p-4 md:p-8">{children}</main>

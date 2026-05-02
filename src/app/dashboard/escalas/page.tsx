@@ -22,6 +22,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { formatShortName } from "@/lib/utils"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export default function EscalasPage() {
   const firestore = useFirestore()
@@ -237,7 +238,6 @@ export default function EscalasPage() {
         )}
       </div>
 
-      {/* Seção de Atribuições (Visível para Membros, Admins e Moderadores que estão escalados) */}
       {myAssignments.length > 0 && (
         <div className="space-y-4">
           <h3 className="text-xl font-bold flex items-center gap-2">
@@ -283,7 +283,6 @@ export default function EscalasPage() {
         </div>
       )}
 
-      {/* Tabela de Escalas */}
       <Card className="border-none shadow-md overflow-hidden">
         <CardHeader className="bg-muted/30 pb-4">
           <CardTitle className="text-lg flex items-center gap-2">
@@ -304,43 +303,64 @@ export default function EscalasPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rosters?.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(roster => (
-                  <TableRow key={roster.id} className="hover:bg-muted/10">
-                    <TableCell className="font-medium text-xs">
-                      {format(new Date(roster.date + 'T12:00:00'), 'dd/MM/yyyy')}
-                    </TableCell>
-                    <TableCell className="text-sm font-semibold">{roster.description}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {roster.assignments?.map((as: any, i: number) => (
-                          <Badge key={i} variant="outline" className={`text-[9px] px-1.5 h-5 flex gap-1 items-center font-normal ${as.status === 'confirmed' ? 'border-green-500 text-green-600 bg-green-50' : as.status === 'swap_requested' ? 'border-red-500 text-red-600 bg-red-50' : ''}`}>
-                            {as.status === 'confirmed' && <Check className="h-2 w-2" />}
-                            {as.status === 'swap_requested' && <ArrowLeftRight className="h-2 w-2" />}
-                            {formatShortName(as.userName)} <span className="opacity-50 text-[8px]">({as.roleName})</span>
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {isAdminOrHigher && (
-                        <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(roster)} title="Editar">
-                            <Pencil className="h-3.5 w-3.5 text-primary" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8" 
-                            onClick={() => { setIdToDelete(roster.id); setIsDeleteDialogOpen(true); }}
-                            title="Excluir"
-                          >
-                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                          </Button>
+                <TooltipProvider>
+                  {rosters?.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(roster => (
+                    <TableRow key={roster.id} className="hover:bg-muted/10">
+                      <TableCell className="font-medium text-xs">
+                        {format(new Date(roster.date + 'T12:00:00'), 'dd/MM/yyyy')}
+                      </TableCell>
+                      <TableCell className="text-sm font-semibold">{roster.description}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {roster.assignments?.map((as: any, i: number) => (
+                            <Tooltip key={i} delayDuration={0}>
+                              <TooltipTrigger asChild>
+                                <div 
+                                  className={`flex h-6 w-6 items-center justify-center rounded-full border text-[10px] font-bold uppercase cursor-help transition-all hover:scale-110 ${
+                                    as.status === 'confirmed' 
+                                      ? 'border-green-500 bg-green-100 text-green-700' 
+                                      : as.status === 'swap_requested' 
+                                      ? 'border-red-500 bg-red-100 text-red-700' 
+                                      : 'border-muted-foreground/30 bg-muted text-muted-foreground'
+                                  }`}
+                                >
+                                  {as.userName?.charAt(0) || "?"}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent side="top">
+                                <div className="flex flex-col">
+                                  <span className="font-bold">{as.userName}</span>
+                                  <span className="text-[10px] opacity-70 uppercase tracking-tighter">{as.roleName}</span>
+                                  <span className={`text-[9px] mt-1 ${as.status === 'confirmed' ? 'text-green-500' : as.status === 'swap_requested' ? 'text-red-500' : 'text-muted-foreground'}`}>
+                                    {as.status === 'confirmed' ? 'Confirmado' : as.status === 'swap_requested' ? 'Troca Solicitada' : 'Pendente'}
+                                  </span>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          ))}
                         </div>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {isAdminOrHigher && (
+                          <div className="flex justify-end gap-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(roster)} title="Editar">
+                              <Pencil className="h-3.5 w-3.5 text-primary" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8" 
+                              onClick={() => { setIdToDelete(roster.id); setIsDeleteDialogOpen(true); }}
+                              title="Excluir"
+                            >
+                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                            </Button>
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TooltipProvider>
                 {!isLoading && rosters?.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center py-12 text-muted-foreground italic text-sm">
@@ -354,7 +374,6 @@ export default function EscalasPage() {
         </CardContent>
       </Card>
 
-      {/* Diálogo de Troca */}
       <Dialog open={isSwapOpen} onOpenChange={setIsSwapOpen}>
         <DialogContent>
           <DialogHeader>
@@ -395,7 +414,6 @@ export default function EscalasPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Diálogo de Criação/Edição (ADMIN) */}
       <Dialog open={isCreateOpen} onOpenChange={(open) => !open && closeDialog()}>
         <DialogContent className="max-w-4xl bg-card max-h-[95vh] flex flex-col overflow-hidden">
           <DialogHeader className="shrink-0">
